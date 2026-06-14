@@ -1,0 +1,188 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0C0D11;
+  --bg-surface: #15161C;
+  --bg-elevated: #1E2027;
+  --bg-hover: #262932;
+  --bg-input: #15161C;
+
+  --foreground: #ECECEE;
+  --text-secondary: #A2A4AD;
+  --text-tertiary: #6A6C76;
+
+  --gold-primary: #C8A217;
+  --gold-light: #E8C84A;
+  --gold-dark: #A68512;
+  --gold-dim: #8B6914;
+  --gold-glow: #F5D442;
+
+  --green: #22C55E;
+  --red: #EF4444;
+
+  --border-color: #2E3038;
+  --border-subtle: #23252D;
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--bg-surface);
+  --color-elevated: var(--bg-elevated);
+  --color-hover: var(--bg-hover);
+  --color-input: var(--bg-input);
+  --color-secondary: var(--text-secondary);
+  --color-tertiary: var(--text-tertiary);
+  --color-gold: var(--gold-primary);
+  --color-gold-light: var(--gold-light);
+  --color-gold-dark: var(--gold-dark);
+  --color-gold-dim: var(--gold-dim);
+  --color-gold-glow: var(--gold-glow);
+  --color-green: var(--green);
+  --color-red: var(--red);
+  --color-border: var(--border-color);
+  --color-border-subtle: var(--border-subtle);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-elevated);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--bg-hover);
+}
+
+/* Solana wallet adapter modal — match Lazr dark gold theme */
+.wallet-adapter-modal-wrapper {
+  background: rgba(0, 0, 0, 0.65) !important;
+  backdrop-filter: blur(4px);
+}
+
+.wallet-adapter-modal {
+  background: var(--bg-elevated) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5) !important;
+}
+
+.wallet-adapter-modal-title {
+  color: var(--foreground) !important;
+  font-weight: 600 !important;
+}
+
+.wallet-adapter-modal-list {
+  margin: 0 0 12px 0 !important;
+}
+
+.wallet-adapter-modal-list .wallet-adapter-button {
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 12px !important;
+  color: var(--foreground) !important;
+  font-family: var(--font-sans), system-ui, sans-serif !important;
+  transition: background 0.15s ease, border-color 0.15s ease !important;
+}
+
+.wallet-adapter-modal-list .wallet-adapter-button:hover {
+  background: var(--bg-hover) !important;
+  border-color: var(--gold-primary) !important;
+}
+
+.wallet-adapter-modal-list .wallet-adapter-button-end-icon,
+.wallet-adapter-modal-list .wallet-adapter-button-start-icon,
+.wallet-adapter-modal-list .wallet-adapter-button-end-icon img,
+.wallet-adapter-modal-list .wallet-adapter-button-start-icon img {
+  filter: none !important;
+}
+
+.wallet-adapter-modal-button-close {
+  background: var(--bg-surface) !important;
+  border-radius: 8px !important;
+}
+
+.wallet-adapter-modal-button-close:hover {
+  background: var(--bg-hover) !important;
+}
+
+.wallet-adapter-modal-button-close svg {
+  fill: var(--text-secondary) !important;
+}
+
+/* Perps leverage slider */
+.perps-leverage-slider {
+  background: linear-gradient(
+    to right,
+    var(--track-color) 0%,
+    var(--track-color) 100%
+  );
+}
+
+.perps-leverage-long {
+  --track-color: rgba(34, 197, 94, 0.35);
+  accent-color: var(--green);
+}
+
+.perps-leverage-short {
+  --track-color: rgba(239, 68, 68, 0.35);
+  accent-color: var(--red);
+}
+
+.perps-leverage-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--foreground);
+  border: 2px solid var(--background);
+  box-shadow: 0 0 0 1px var(--border-color);
+}
+
+.perps-leverage-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--foreground);
+  border: 2px solid var(--background);
+  box-shadow: 0 0 0 1px var(--border-color);
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.pb-safe {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+}
+

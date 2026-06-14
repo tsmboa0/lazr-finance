@@ -1,0 +1,21 @@
+[toolchain]
+package_manager = "yarn"
+
+[features]
+resolution = true
+skip-lint = false
+
+[programs.devnet]
+lazr_prop_amm = "CQMGqi6qSoJPCQzVMPi4Xdob9W4SS267JbSaK5yd3rTw"
+
+[provider]
+cluster = "https://devnet.helius-rpc.com/?api-key=193b6782-795f-4f9f-a39c-838bfc136663"
+wallet = "~/.config/solana/id.json"
+
+[scripts]
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 \"tests/**/*.ts\""
+init-devnet-pools = "npx tsx scripts/init-devnet-pools.ts"
+run-pool-cranks = "npx tsx scripts/run-pool-cranks.ts"
+run-pool-cranks-setup = "npx tsx scripts/run-pool-cranks.ts --setup"
+
+[hooks]
