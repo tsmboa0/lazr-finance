@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "postinstall": "npm install --prefix ../../flash-trade-examples-v2/packages/flash-v2 --omit=dev --no-audit --no-fund"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.30.1",
