@@ -17,6 +17,10 @@ import { formatBankBalance } from "../../../lib/format-numbers";
 import { fmtPrice, fmtUsd, num } from "../../../lib/flash-trade/format";
 import { useFlashPrice, useMarketLimits } from "../../../lib/flash-trade/hooks";
 import { previewOpenPosition } from "../../../lib/flash-trade/trade";
+import {
+  PERPS_TRADE_TAB_EVENT,
+  type PerpsTradeTabDetail,
+} from "../../../lib/onboarding/perps-tour-steps";
 import InsufficientBalanceError from "../InsufficientBalanceError";
 
 type Side = "long" | "short";
@@ -95,6 +99,17 @@ export default function PerpsTradePanel({
   }, [levMin, levMax]);
 
   useEffect(() => {
+    const handleTourTab = (event: Event) => {
+      const tab = (event as CustomEvent<PerpsTradeTabDetail>).detail?.tab;
+      if (tab === "market" || tab === "limit" || tab === "autopilot") {
+        setOrderType(tab);
+      }
+    };
+    window.addEventListener(PERPS_TRADE_TAB_EVENT, handleTourTab);
+    return () => window.removeEventListener(PERPS_TRADE_TAB_EVENT, handleTourTab);
+  }, []);
+
+  useEffect(() => {
     if (!numericAmount || numericAmount <= 0 || !isPerpsEnabled) {
       setPreviewFee(null);
       setPreviewLiq(null);
@@ -165,6 +180,7 @@ export default function PerpsTradePanel({
     (orderType !== "limit" || parseFloat(limitPrice) > 0);
 
   const needsEnable = connected && flash && ownerLoaded && !isPerpsEnabled;
+  const needsSessionRefresh = flash?.needsSessionRefresh ?? false;
 
   const handleSubmit = useCallback(async () => {
     if (!flash || !canSubmit) return;
@@ -220,6 +236,7 @@ export default function PerpsTradePanel({
           : "w-[380px] flex-shrink-0 border-l border-border bg-background flex flex-col overflow-y-auto"
       }
     >
+      <div data-tour="perps-trade">
       <div className="grid grid-cols-2 border-b border-border">
         <button
           type="button"
@@ -271,6 +288,7 @@ export default function PerpsTradePanel({
             <AutopilotTabButton
               active={orderType === "autopilot"}
               onClick={() => setOrderType("autopilot")}
+              tourId="perps-autopilot-tab"
             />
           </div>
           <span className="text-xs text-gold font-mono tabular-nums">
@@ -279,7 +297,9 @@ export default function PerpsTradePanel({
         </div>
 
         {orderType === "autopilot" ? (
-          <PerpsAutopilotPanel onRequestEnable={onRequestEnable} />
+          <div data-tour="perps-autopilot-panel">
+            <PerpsAutopilotPanel onRequestEnable={onRequestEnable} />
+          </div>
         ) : (
           <>
             {orderType === "limit" && (
@@ -453,6 +473,14 @@ export default function PerpsTradePanel({
                 >
                   Enable Perps to Trade
                 </button>
+              ) : needsSessionRefresh ? (
+                <button
+                  type="button"
+                  onClick={onRequestEnable}
+                  className="h-12 rounded-2xl bg-gradient-to-r from-gold-dark via-gold to-gold-light text-background text-base font-bold hover:opacity-90 transition-opacity"
+                >
+                  Refresh Session to Trade
+                </button>
               ) : (
                 <button
                   type="button"
@@ -514,6 +542,7 @@ export default function PerpsTradePanel({
             </div>
           </>
         )}
+      </div>
       </div>
 
       {successToast && (

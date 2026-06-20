@@ -1,4 +1,5 @@
 pub mod admin;
+pub mod autopilot;
 pub mod crank;
 pub mod delegation;
 pub mod liquidity;
@@ -8,6 +9,12 @@ pub mod user;
 pub use admin::{
     add_liquidity::*, initialize_admin::*, initialize_pool::*, pause_pool::*,
     remove_liquidity::*, resume_pool::*, update_config::*,
+};
+#[allow(ambiguous_glob_reexports)]
+pub use autopilot::{
+    delegate_autopilot::*, init_autopilot::*, process_autopilot_tick::*,
+    setup_autopilot_crank::*, start_autopilot::*, stop_autopilot::*,
+    undelegate_autopilot::*, update_autopilot::*,
 };
 #[allow(ambiguous_glob_reexports)]
 pub use crank::{process_crank_tick::*, setup_crank::*};

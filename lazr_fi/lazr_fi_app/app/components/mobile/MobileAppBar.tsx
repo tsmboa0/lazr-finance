@@ -1,19 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import {
   Search,
   Settings,
-  Droplets,
   SlidersHorizontal,
   Plus,
 } from "lucide-react";
 import { useMarketData } from "../../providers/MarketDataProvider";
+import FaucetModal from "../faucet/FaucetModal";
 import MobileWalletButton from "./MobileWalletButton";
 
 export default function MobileAppBar() {
-  const pathname = usePathname();
   const { getToken } = useMarketData();
   const sol = getToken("SOL");
   const lazr = getToken("LAZR");
@@ -36,17 +34,7 @@ export default function MobileAppBar() {
           />
         </div>
 
-        <Link
-          href="/faucet"
-          className={`p-1.5 rounded-lg transition-colors ${
-            pathname === "/faucet"
-              ? "bg-elevated"
-              : "hover:bg-elevated/50"
-          }`}
-          aria-label="Faucet"
-        >
-          <Droplets className="w-4 h-4 text-gold" />
-        </Link>
+        <FaucetModal variant="mobile" />
 
         <button
           type="button"

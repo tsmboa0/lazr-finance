@@ -1,6 +1,6 @@
 "use client";
 
-import { Zap } from "lucide-react";
+import { KeyRound, Zap } from "lucide-react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useOptionalFlashTrade } from "../../providers/flash-trade-context";
 
@@ -13,13 +13,49 @@ export default function PerpsSetupBanner({
   const flash = useOptionalFlashTrade();
   const ownerLoaded = flash?.ownerLoaded ?? false;
   const isPerpsEnabled = flash?.isPerpsEnabled ?? false;
+  const needsSessionRefresh = flash?.needsSessionRefresh ?? false;
 
-  if (!connected || !flash || !ownerLoaded || isPerpsEnabled) {
+  if (!connected || !flash || !ownerLoaded) {
+    return null;
+  }
+
+  if (needsSessionRefresh) {
+    return (
+      <div
+        className="flex-shrink-0 flex items-center justify-between gap-4 px-4 py-2.5 border-b border-gold/20 bg-gold/5"
+        data-tour="perps-session-refresh"
+      >
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-foreground">
+            Refresh one-click trading session
+          </p>
+          <p className="text-xs text-secondary mt-0.5">
+            Your Flash Trade basket is already set up on-chain, but this browser
+            needs a new session key for popup-free trades. One wallet approval —
+            no USDC moves.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onEnable}
+          className="shrink-0 flex items-center gap-1.5 h-9 px-4 rounded-xl bg-gradient-to-r from-gold-dark via-gold to-gold-light text-background text-sm font-semibold hover:opacity-90 transition-opacity"
+        >
+          <KeyRound className="w-3.5 h-3.5" />
+          Refresh Session
+        </button>
+      </div>
+    );
+  }
+
+  if (isPerpsEnabled) {
     return null;
   }
 
   return (
-    <div className="flex-shrink-0 flex items-center justify-between gap-4 px-4 py-2.5 border-b border-gold/20 bg-gold/5">
+    <div
+      className="flex-shrink-0 flex items-center justify-between gap-4 px-4 py-2.5 border-b border-gold/20 bg-gold/5"
+      data-tour="perps-setup"
+    >
       <div className="min-w-0">
         <p className="text-sm font-medium text-foreground">
           Activate Flash Trade perps

@@ -83,6 +83,7 @@ body {
 .wallet-adapter-modal-wrapper {
   background: rgba(0, 0, 0, 0.65) !important;
   backdrop-filter: blur(4px);
+  z-index: 110 !important;
 }
 
 .wallet-adapter-modal {
@@ -184,5 +185,58 @@ body {
 
 .pb-safe {
   padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+}
+
+/* Guided tour spotlight */
+[data-tour].tour-target-active {
+  position: relative;
+  z-index: 97 !important;
+  isolation: isolate;
+}
+
+@keyframes tour-ring-pulse {
+  0%,
+  100% {
+    border-color: var(--gold-primary);
+    box-shadow:
+      0 0 0 0 rgba(245, 212, 66, 0.45),
+      0 0 18px 3px rgba(200, 162, 23, 0.35),
+      inset 0 0 16px rgba(245, 212, 66, 0.06);
+  }
+  50% {
+    border-color: var(--gold-glow);
+    box-shadow:
+      0 0 0 5px rgba(245, 212, 66, 0.22),
+      0 0 36px 10px rgba(245, 212, 66, 0.55),
+      inset 0 0 24px rgba(245, 212, 66, 0.1);
+  }
+}
+
+@keyframes tour-glow-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.04);
+  }
+}
+
+.tour-spotlight-backdrop {
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.72);
+}
+
+.tour-spotlight-ring {
+  border: 2px solid var(--gold-primary);
+  background: transparent;
+  animation: tour-ring-pulse 1.6s ease-in-out infinite;
+}
+
+.tour-spotlight-glow {
+  border: 1px solid rgba(245, 212, 66, 0.35);
+  background: rgba(245, 212, 66, 0.04);
+  animation: tour-glow-pulse 1.6s ease-in-out infinite;
 }
 

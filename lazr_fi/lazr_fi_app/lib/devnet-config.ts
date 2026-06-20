@@ -6,9 +6,11 @@ export interface DevnetTokenEntry {
   name: string;
   assetMint: string;
   decimals: number;
+  pythLazerId?: number;
   pool: string;
   config: string;
   quoteState: string;
+  riskState?: string;
   assetVault: string;
   usdcVault: string;
   oracleFeed: string;

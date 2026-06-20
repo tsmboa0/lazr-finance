@@ -12,6 +12,8 @@ import type { Token } from "../../data/tokens";
 import { useBankBalances } from "../../hooks/useBankBalances";
 import { usePoolQuoteContext } from "../../providers/PoolQuoteProvider";
 import { usePropAmmActions } from "../../hooks/usePropAmmActions";
+import { useUserBankDelegation } from "../../hooks/useUserBankDelegation";
+import UserBankRedelegateBanner from "../propamm/UserBankRedelegateBanner";
 import { getPoolForSymbol } from "../../../lib/devnet-config";
 import { hasInsufficientBalance } from "../../../lib/balance-validation";
 import InsufficientBalanceError from "../InsufficientBalanceError";
@@ -20,6 +22,11 @@ import {
   formatBankBalance,
   formatSwapAmount,
 } from "../../../lib/format-numbers";
+import {
+  PROPAMM_SWAP_TAB_EVENT,
+  type PropAmmSwapTabDetail,
+} from "../../../lib/onboarding/propamm-tour-steps";
+import { appendPropAmmTx } from "../../../lib/prop-amm/tx-history";
 
 const ORDER_TABS = ["Market", "Limit"] as const;
 type OrderTab = "Market" | "Limit" | "Autopilot";
@@ -32,15 +39,6 @@ const USDC = {
 };
 
 type SwapToken = Token | typeof USDC;
-
-interface OpenLimitOrder {
-  id: string;
-  side: "buy" | "sell";
-  amount: number;
-  limitPrice: number;
-  tokenTicker: string;
-  createdAt: number;
-}
 
 function formatNumber(value: number, ticker?: string): string {
   return formatSwapAmount(value, ticker);
@@ -133,17 +131,20 @@ export default function SwapPanel({
   const [amount, setAmount] = useState("");
   const [limitPrice, setLimitPrice] = useState("");
   const [inverted, setInverted] = useState(false);
-  const [openOrders, setOpenOrders] = useState<OpenLimitOrder[]>([]);
-  const [footerTab, setFooterTab] = useState<"Holdings" | "Orders" | "History">(
-    "Holdings"
-  );
   const [successToast, setSuccessToast] = useState<string | null>(null);
-  const { connected } = useWallet();
+  const { connected, publicKey } = useWallet();
   const { setVisible } = useWalletModal();
   const { getBankBalance, refresh, loading: balancesLoading } =
     useBankBalances();
   const { swap, loading: swapLoading, error: swapError, clearError } =
     usePropAmmActions();
+  const {
+    needsRedelegate,
+    redelegateLoading,
+    redelegateError,
+    redelegate,
+    refresh: refreshUserBankDelegation,
+  } = useUserBankDelegation();
   const poolCtx = useMemo(() => getPoolForSymbol(token.ticker), [token.ticker]);
   const poolQuote = usePoolQuoteContext();
 
@@ -154,6 +155,17 @@ export default function SwapPanel({
       setLimitPrice(formatLimitPriceInput(seed));
     }
   }, [orderTab, limitPrice, token.priceUsd, poolQuote.fairPriceUsd]);
+
+  useEffect(() => {
+    const handleTourTab = (event: Event) => {
+      const tab = (event as CustomEvent<PropAmmSwapTabDetail>).detail?.tab;
+      if (tab === "Market" || tab === "Limit" || tab === "Autopilot") {
+        setOrderTab(tab);
+      }
+    };
+    window.addEventListener(PROPAMM_SWAP_TAB_EVENT, handleTourTab);
+    return () => window.removeEventListener(PROPAMM_SWAP_TAB_EVENT, handleTourTab);
+  }, []);
 
   const numericAmount = parseFloat(amount) || 0;
   const numericLimitPrice = parseFloat(limitPrice.replace(/,/g, "")) || 0;
@@ -264,6 +276,7 @@ export default function SwapPanel({
     numericAmount > 0 &&
     !insufficientSellBalance &&
     !swapLoading &&
+    !needsRedelegate &&
     quoteReady &&
     (swapEstimate?.outputHuman ?? 0) > 0;
   const canSubmitLimit =
@@ -282,7 +295,7 @@ export default function SwapPanel({
     const boughtTicker = buyToken.ticker;
 
     try {
-      await swap({
+      const result = await swap({
         assetSymbol: token.ticker,
         sellSymbol: sellToken.ticker,
         amountIn: numericAmount,
@@ -292,28 +305,29 @@ export default function SwapPanel({
       setSuccessToast(
         `Swapped ${formatBankBalance(soldAmount, soldTicker)} ${soldTicker} → ${formatBankBalance(boughtAmount, boughtTicker)} ${boughtTicker}`
       );
+      if (publicKey) {
+        appendPropAmmTx(publicKey.toBase58(), {
+          kind: "swap",
+          signature: result.signature,
+          pair: `${token.ticker}/USDC`,
+          direction: inverted ? "sell" : "buy",
+          amountLabel: `${formatBankBalance(soldAmount, soldTicker)} ${soldTicker} → ${formatBankBalance(boughtAmount, boughtTicker)} ${boughtTicker}`,
+        });
+      }
       await refresh();
     } catch {
       // surfaced via swapError
+    } finally {
+      void refreshUserBankDelegation();
     }
   };
 
   const placeLimitOrder = () => {
     if (!canSubmitLimit) return;
-
-    setOpenOrders((prev) => [
-      {
-        id: `${Date.now()}`,
-        side: inverted ? "sell" : "buy",
-        amount: numericAmount,
-        limitPrice: numericLimitPrice,
-        tokenTicker: token.ticker,
-        createdAt: Date.now(),
-      },
-      ...prev,
-    ]);
     setAmount("");
-    setFooterTab("Orders");
+    setSuccessToast(
+      `Limit ${inverted ? "sell" : "buy"} order placed for ${token.ticker}`
+    );
   };
 
   const showOrderForm = orderTab === "Market" || orderTab === "Limit";
@@ -346,12 +360,16 @@ export default function SwapPanel({
             active={orderTab === "Autopilot"}
             onClick={() => setOrderTab("Autopilot")}
             size="md"
+            tourId="propamm-autopilot-tab"
           />
         </div>
       </div>
 
       {orderTab === "Autopilot" ? (
-        <div className={`p-4 ${embedded ? "pb-6" : ""}`}>
+        <div
+          className={`p-4 ${embedded ? "pb-6" : ""}`}
+          data-tour="propamm-autopilot"
+        >
           <AutopilotPanel
             context="swap"
             tokenTicker={token.ticker}
@@ -364,7 +382,15 @@ export default function SwapPanel({
       ) : (
         <div
           className={`p-4 flex flex-col gap-1.5 ${embedded ? "pb-6" : ""}`}
+          data-tour="propamm-swap"
         >
+          <UserBankRedelegateBanner
+            needsRedelegate={needsRedelegate}
+            loading={redelegateLoading}
+            error={redelegateError}
+            onRedelegate={() => void redelegate()}
+            className="mb-2"
+          />
           {/* Sell */}
           <div
             className={`rounded-2xl bg-input border p-4 ${
@@ -590,77 +616,6 @@ export default function SwapPanel({
         </div>
       )}
 
-      {!embedded && (
-      <div className="mt-auto border-t border-border">
-        <div className="flex items-center gap-1 px-4 h-11 border-b border-border">
-          {(["Holdings", "Orders", "History"] as const).map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              onClick={() => setFooterTab(tab)}
-              className={`px-3 py-1.5 text-sm font-medium transition-colors ${
-                footerTab === tab
-                  ? "text-foreground"
-                  : "text-secondary hover:text-foreground"
-              }`}
-            >
-              {tab}
-              {tab === "Orders" && openOrders.length > 0 && (
-                <span className="ml-1.5 text-[10px] font-mono text-gold">
-                  ({openOrders.length})
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-
-        {footerTab === "Orders" && openOrders.length > 0 ? (
-          <div className="max-h-[200px] overflow-y-auto">
-            {openOrders.map((order) => (
-              <div
-                key={order.id}
-                className="px-4 py-3 border-b border-border-subtle last:border-b-0"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-sm font-medium text-foreground">
-                    {order.side === "buy" ? "Buy" : "Sell"} {order.tokenTicker}
-                  </span>
-                  <span className="text-[11px] text-gold bg-gold/10 px-2 py-0.5 rounded-md font-medium">
-                    Open
-                  </span>
-                </div>
-                <div className="mt-1.5 flex items-center justify-between text-[11px] text-tertiary font-mono tabular-nums">
-                  <span>
-                    {formatBankBalance(order.amount, order.side === "buy" ? "USDC" : order.tokenTicker)}{" "}
-                    {order.side === "buy" ? "USDC" : order.tokenTicker}
-                  </span>
-                  <span>@ ${formatNumber(order.limitPrice)}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center gap-3 py-10 px-4">
-            <span className="text-sm text-secondary">
-              {footerTab === "Orders"
-                ? "No open orders"
-                : connected
-                  ? "Nothing to show yet"
-                  : "Wallet not connected"}
-            </span>
-            {!connected && (
-              <button
-                type="button"
-                onClick={() => setVisible(true)}
-                className="h-9 px-5 rounded-xl bg-gold/10 border border-gold/40 text-gold text-sm font-semibold hover:bg-gold/15 transition-colors"
-              >
-                Connect Wallet
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-      )}
       {successToast && (
         <ShortToast
           message={successToast}

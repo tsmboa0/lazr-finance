@@ -2,7 +2,17 @@ import { Transaction } from "@solana/web3.js";
 
 const PREFIX = "[Lazr PropAMM]";
 
-export type PropAmmFlow = "deposit" | "withdraw" | "swap" | "quote" | "delegation" | "tx";
+export type PropAmmFlow =
+  | "deposit"
+  | "withdraw"
+  | "swap"
+  | "quote"
+  | "delegation"
+  | "redelegate"
+  | "recovery"
+  | "tx"
+  | "autopilot"
+  | "autopilot-events";
 
 export function logStep(
   flow: PropAmmFlow,

@@ -1,5 +1,6 @@
 pub mod constants;
 pub mod error;
+pub mod events;
 pub mod instructions;
 pub mod math;
 pub mod oracle;
@@ -9,6 +10,7 @@ use anchor_lang::prelude::*;
 use ephemeral_rollups_sdk::anchor::ephemeral;
 
 pub use constants::*;
+pub use events::*;
 pub use instructions::*;
 pub use state::*;
 
@@ -103,5 +105,49 @@ pub mod lazr_prop_amm {
         args: WithdrawFromBankErArgs,
     ) -> Result<()> {
         instructions::liquidity::withdraw_from_bank_er::handler(ctx, args)
+    }
+
+    pub fn init_autopilot(
+        ctx: Context<InitAutopilot>,
+        args: InitAutopilotArgs,
+    ) -> Result<()> {
+        instructions::autopilot::init_autopilot::handler(ctx, args)
+    }
+
+    pub fn update_autopilot(
+        ctx: Context<UpdateAutopilot>,
+        args: UpdateAutopilotArgs,
+    ) -> Result<()> {
+        instructions::autopilot::update_autopilot::handler(ctx, args)
+    }
+
+    pub fn start_autopilot(
+        ctx: Context<StartAutopilot>,
+        args: StartAutopilotArgs,
+    ) -> Result<()> {
+        instructions::autopilot::start_autopilot::handler(ctx, args)
+    }
+
+    pub fn stop_autopilot(ctx: Context<StopAutopilot>) -> Result<()> {
+        instructions::autopilot::stop_autopilot::handler(ctx)
+    }
+
+    pub fn undelegate_autopilot(ctx: Context<UndelegateAutopilot>) -> Result<()> {
+        instructions::autopilot::undelegate_autopilot::handler(ctx)
+    }
+
+    pub fn delegate_autopilot(ctx: Context<DelegateAutopilot>) -> Result<()> {
+        instructions::autopilot::delegate_autopilot::handler(ctx)
+    }
+
+    pub fn setup_autopilot_crank(
+        ctx: Context<SetupAutopilotCrank>,
+        args: SetupAutopilotCrankArgs,
+    ) -> Result<()> {
+        instructions::autopilot::setup_autopilot_crank::handler(ctx, args)
+    }
+
+    pub fn process_autopilot_tick(ctx: Context<ProcessAutopilotTick>) -> Result<()> {
+        instructions::autopilot::process_autopilot_tick::handler(ctx)
     }
 }

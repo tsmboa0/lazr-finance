@@ -17,13 +17,13 @@ import {
   erValidatorRemainingAccounts,
   getDelegationStatus,
   requireErEndpoint,
-  waitForUndelegated,
 } from "./delegation";
 import { userBankPda } from "./pdas";
 import { getErProgram, getL1Program } from "./program";
+import { recoverUserBankAfterAbortedFundsTx } from "./recovery";
 import {
-  buildCreateSessionInstructions,
-  getOrCreateSessionKeypair,
+  prepareSessionForBankActivity,
+  sendSessionSetupIfNeeded,
 } from "./session";
 import {
   assertSessionFundedOnEr,
@@ -129,32 +129,40 @@ export async function executeDeposit(
       erFqdn: delegation.fqdn ?? null,
     });
 
-    const sessionKeypair = getOrCreateSessionKeypair(user);
-    logStep("deposit", "Session keypair ready", {
-      sessionSigner: sessionKeypair.publicKey.toBase58(),
-    });
-
-    const { instructions: sessionIxs } = await buildCreateSessionInstructions(
+    const session = await prepareSessionForBankActivity(
       wallet,
       connection,
-      user,
-      sessionKeypair
+      user
     );
+    const { sessionKeypair, sessionToken, sessionInstructions } = session;
 
-    logStep("deposit", "Session setup", {
-      newSessionInstructions: sessionIxs.length,
+    logStep("deposit", "Session check", {
+      sessionSigner: sessionKeypair.publicKey.toBase58(),
+      hasStoredSessionKey: session.hasStoredSessionKey,
+      needsSessionSetup: session.needsSessionSetup,
+      newSessionInstructions: sessionInstructions.length,
     });
+
+    const mustSendSessionFirst =
+      session.needsSessionSetup && bankDelegated;
+
+    let didMoveBankToL1 = false;
+
+    if (mustSendSessionFirst) {
+      logStep("deposit", "Creating session on L1 before ER undelegate");
+      await sendSessionSetupIfNeeded(
+        connection,
+        wallet,
+        signTransaction,
+        session,
+        "deposit create session"
+      );
+    }
 
     if (bankDelegated) {
       logStep("deposit", "Bank delegated — undelegate on ER first");
 
       const erEndpoint = requireErEndpoint(delegation);
-      const { sessionToken } = await buildCreateSessionInstructions(
-        wallet,
-        connection,
-        user,
-        sessionKeypair
-      );
 
       logStep("deposit", "Undelegate accounts", {
         erEndpoint,
@@ -187,15 +195,18 @@ export async function executeDeposit(
         400_000,
         "deposit undelegate"
       );
-      await waitForUndelegated(userBank);
-      logStep("deposit", "Undelegate complete — proceeding to L1 deposit");
+      didMoveBankToL1 = true;
+      logStep(
+        "deposit",
+        "Undelegate confirmed on ER — proceeding to L1 deposit (skipping router poll)"
+      );
     } else {
       logStep("deposit", "Bank not delegated — skipping ER undelegate");
     }
 
     const tx = new Transaction();
-    if (sessionIxs.length > 0) {
-      tx.add(...sessionIxs);
+    if (session.needsSessionSetup && !mustSendSessionFirst) {
+      tx.add(...sessionInstructions);
     }
 
     if (!bankExists) {
@@ -246,19 +257,29 @@ export async function executeDeposit(
 
     logTxInstructions("deposit L1 bundle (pre-send)", tx);
 
-    const needsSessionSigner = sessionIxs.length > 0;
-    const signature = await sendWalletTransaction(
-      connection,
-      wallet,
-      signTransaction,
-      tx,
-      needsSessionSigner ? [sessionKeypair] : [],
-      400_000,
-      "deposit L1"
-    );
+    const needsSessionSigner =
+      session.needsSessionSetup && !mustSendSessionFirst;
 
-    logStep("deposit", "Deposit complete", { signature });
-    return { signature };
+    try {
+      const signature = await sendWalletTransaction(
+        connection,
+        wallet,
+        signTransaction,
+        tx,
+        needsSessionSigner ? [sessionKeypair] : [],
+        400_000,
+        "deposit L1"
+      );
+
+      logStep("deposit", "Deposit complete", { signature });
+      return { signature };
+    } catch (error) {
+      throw await recoverUserBankAfterAbortedFundsTx(
+        { user, connection, wallet, signTransaction },
+        error,
+        didMoveBankToL1
+      );
+    }
   } catch (error) {
     logError("deposit", "executeDeposit", error);
     throw error;

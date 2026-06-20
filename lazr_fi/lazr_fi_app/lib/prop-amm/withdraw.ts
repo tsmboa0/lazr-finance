@@ -16,13 +16,13 @@ import {
   erValidatorRemainingAccounts,
   getDelegationStatus,
   requireErEndpoint,
-  waitForUndelegated,
 } from "./delegation";
 import { userBankPda } from "./pdas";
 import { getErProgram, getL1Program } from "./program";
+import { recoverUserBankAfterAbortedFundsTx } from "./recovery";
 import {
-  buildCreateSessionInstructions,
-  getOrCreateSessionKeypair,
+  prepareSessionForBankActivity,
+  sendSessionSetupIfNeeded,
 } from "./session";
 import {
   assertSessionFundedOnEr,
@@ -112,34 +112,28 @@ export async function executeWithdraw(
 
     const erEndpoint = requireErEndpoint(delegation);
 
-    const sessionKeypair = getOrCreateSessionKeypair(user);
-    logStep("withdraw", "Session keypair ready", {
+    const session = await prepareSessionForBankActivity(
+      wallet,
+      connection,
+      user
+    );
+    const { sessionKeypair, sessionToken, sessionInstructions } = session;
+
+    logStep("withdraw", "Session check", {
       sessionSigner: sessionKeypair.publicKey.toBase58(),
-    });
-
-    const { instructions: sessionIxs, sessionToken } =
-      await buildCreateSessionInstructions(
-        wallet,
-        connection,
-        user,
-        sessionKeypair
-      );
-
-    logStep("withdraw", "Session setup", {
-      newSessionInstructions: sessionIxs.length,
+      hasStoredSessionKey: session.hasStoredSessionKey,
+      needsSessionSetup: session.needsSessionSetup,
+      newSessionInstructions: sessionInstructions.length,
       sessionToken: sessionToken.toBase58(),
     });
 
-    if (sessionIxs.length > 0) {
+    if (session.needsSessionSetup) {
       logStep("withdraw", "Creating session on L1 first");
-      const sessionTx = new Transaction().add(...sessionIxs);
-      await sendWalletTransaction(
+      await sendSessionSetupIfNeeded(
         connection,
         wallet,
         signTransaction,
-        sessionTx,
-        [sessionKeypair],
-        400_000,
+        session,
         "withdraw create session"
       );
     }
@@ -179,7 +173,6 @@ export async function executeWithdraw(
       "withdraw ER"
     );
 
-    await waitForUndelegated(userBank);
     logStep("withdraw", "ER withdraw complete — settling on L1");
 
     const program = getL1Program(connection, wallet);
@@ -198,18 +191,26 @@ export async function executeWithdraw(
     const settleTx = new Transaction().add(withdrawIx);
     logTxInstructions("withdraw L1 settle bundle (pre-send)", settleTx);
 
-    const signature = await sendWalletTransaction(
-      connection,
-      wallet,
-      signTransaction,
-      settleTx,
-      [],
-      500_000,
-      "withdraw L1 settle"
-    );
+    try {
+      const signature = await sendWalletTransaction(
+        connection,
+        wallet,
+        signTransaction,
+        settleTx,
+        [],
+        500_000,
+        "withdraw L1 settle"
+      );
 
-    logStep("withdraw", "Withdraw complete", { signature });
-    return { signature };
+      logStep("withdraw", "Withdraw complete", { signature });
+      return { signature };
+    } catch (error) {
+      throw await recoverUserBankAfterAbortedFundsTx(
+        { user, connection, wallet, signTransaction },
+        error,
+        true
+      );
+    }
   } catch (error) {
     logError("withdraw", "executeWithdraw", error);
     throw error;

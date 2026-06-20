@@ -32,6 +32,7 @@ export default function PerpsEnableSheet({
   const enableState = flash?.enableState ?? null;
   const enabling = flash?.enabling ?? false;
   const runEnable = flash?.runEnable ?? (async () => false);
+  const needsSessionRefresh = flash?.needsSessionRefresh ?? false;
 
   if (!open || !flash) return null;
 
@@ -47,7 +48,7 @@ export default function PerpsEnableSheet({
   };
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center">
+    <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center">
       <button
         type="button"
         className="absolute inset-0 bg-black/60"
@@ -62,11 +63,14 @@ export default function PerpsEnableSheet({
         <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-border-subtle">
           <div>
             <h2 className="text-base font-bold text-foreground">
-              Enable Perps Trading
+              {needsSessionRefresh
+                ? "Refresh Trading Session"
+                : "Enable Perps Trading"}
             </h2>
             <p className="text-xs text-secondary mt-1 leading-relaxed">
-              Account setup only on Solana mainnet. No USDC moves here — only a
-              small SOL rent top-up for the session key.
+              {needsSessionRefresh
+                ? "Your Flash Trade basket is already on-chain. Create a session key in this browser for one-click trades — one wallet approval, small SOL top-up only."
+                : "Account setup only on Solana mainnet. No USDC moves here — only a small SOL rent top-up for the session key."}
             </p>
           </div>
           {!locked && (
@@ -145,10 +149,16 @@ export default function PerpsEnableSheet({
               className="h-11 rounded-2xl bg-gradient-to-r from-gold-dark via-gold to-gold-light text-background text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-40"
             >
               {enabling
-                ? "Setting up…"
+                ? needsSessionRefresh
+                  ? "Refreshing…"
+                  : "Setting up…"
                 : stopped
-                  ? "Retry Enable"
-                  : "Approve in Wallet"}
+                  ? needsSessionRefresh
+                    ? "Retry Refresh"
+                    : "Retry Enable"
+                  : needsSessionRefresh
+                    ? "Approve Session in Wallet"
+                    : "Approve in Wallet"}
             </button>
           )}
           {done && (

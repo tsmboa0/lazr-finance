@@ -17,6 +17,8 @@ pub const HEDGE_STATE_SEED: &[u8] = b"hedge_state";
 #[constant]
 pub const USER_BANK_SEED: &[u8] = b"user_bank";
 #[constant]
+pub const AUTOPILOT_SEED: &[u8] = b"autopilot";
+#[constant]
 pub const ASSET_VAULT_SEED: &[u8] = b"asset_vault";
 #[constant]
 pub const USDC_VAULT_SEED: &[u8] = b"usdc_vault";
@@ -27,8 +29,8 @@ pub const DEFAULT_MAX_SPREAD_BPS: u64 = 200;
 pub const DEFAULT_VIRTUAL_DEPTH_K: u64 = 1_000_000_000;
 pub const DEFAULT_VOLATILITY_WINDOW_SIZE: u8 = 32;
 pub const DEFAULT_CRANK_INTERVAL_MS: u64 = 50;
-/// MagicBlock ScheduleTask: iterations == 0 runs until cancelled.
-pub const CRANK_INFINITE_ITERATIONS: i64 = 0;
+/// MagicBlock ScheduleTask requires iterations >= 1 (0 is rejected on-chain).
+pub const CRANK_DEFAULT_ITERATIONS: i64 = 1_000_000_000;
 pub const DEFAULT_MAX_TRADE_SIZE: u64 = 1_000_000_000_000;
 pub const DEFAULT_LAMBDA: u64 = 100;
 pub const DEFAULT_MAX_ORACLE_STALENESS_SEC: u64 = 10;

@@ -33,7 +33,8 @@ export const DEFAULT_LIQUIDITY = {
   usdcAmount: 500_000_000_000,
 } as const;
 
-export const CRANK_ITERATIONS = 0;
+/** Magic ScheduleTask requires iterations >= 1. ~1B @ 50ms ≈ 1.6 years per pool. */
+export const CRANK_ITERATIONS = 1_000_000_000;
 
 export interface TokenDefinition {
   symbol: string;

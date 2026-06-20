@@ -493,50 +493,50 @@ async function main() {
       }
     }
 
-    manifestTokens.push({
-      symbol: token.symbol,
-      name: token.name,
-      assetMint: assetMint.toString(),
-      decimals: token.decimals,
-      pythLazerId: token.pythLazerId,
-      oracleExponent: token.oracleExponent,
-      oracleFeed: oracleFeed.toString(),
-      pool: accounts.pool.toString(),
-      config: accounts.config.toString(),
-      quoteState: accounts.quoteState.toString(),
-      riskState: accounts.riskState.toString(),
-      volatilityState: accounts.volatilityState.toString(),
-      hedgeState: accounts.hedgeState.toString(),
-      assetVault: accounts.assetVault.toString(),
-      usdcVault: accounts.usdcVault.toString(),
-      delegated,
-      crankTaskId,
-    });
+    // manifestTokens.push({
+    //   symbol: token.symbol,
+    //   name: token.name,
+    //   assetMint: assetMint.toString(),
+    //   decimals: token.decimals,
+    //   pythLazerId: token.pythLazerId,
+    //   oracleExponent: token.oracleExponent,
+    //   oracleFeed: oracleFeed.toString(),
+    //   pool: accounts.pool.toString(),
+    //   config: accounts.config.toString(),
+    //   quoteState: accounts.quoteState.toString(),
+    //   riskState: accounts.riskState.toString(),
+    //   volatilityState: accounts.volatilityState.toString(),
+    //   hedgeState: accounts.hedgeState.toString(),
+    //   assetVault: accounts.assetVault.toString(),
+    //   usdcVault: accounts.usdcVault.toString(),
+    //   delegated,
+    //   crankTaskId,
+    // });
   }
 
   // ── 4. Write manifest ──────────────────────────────────────────────────────
 
-  const manifest: DevnetTokenManifest = {
-    version: 1,
-    network: "devnet",
-    programId: program.programId.toString(),
-    usdcMint: usdcMint.toString(),
-    usdcDecimals: 6,
-    mintAuthority: authority.publicKey.toString(),
-    erEndpoint: ER_ENDPOINT,
-    erValidator: ER_VALIDATOR.toString(),
-    faucetClaimAmount: 1_000,
-    tokens: manifestTokens,
-    updatedAt: new Date().toISOString(),
-  };
+  // const manifest: DevnetTokenManifest = {
+  //   version: 1,
+  //   network: "devnet",
+  //   programId: program.programId.toString(),
+  //   usdcMint: usdcMint.toString(),
+  //   usdcDecimals: 6,
+  //   mintAuthority: authority.publicKey.toString(),
+  //   erEndpoint: ER_ENDPOINT,
+  //   erValidator: ER_VALIDATOR.toString(),
+  //   faucetClaimAmount: 1_000,
+  //   tokens: manifestTokens,
+  //   updatedAt: new Date().toISOString(),
+  // };
 
-  writeFileSync(MANIFEST_PATH, JSON.stringify(manifest, null, 2));
-  logStep(`Wrote manifest → ${MANIFEST_PATH}`);
+  // writeFileSync(MANIFEST_PATH, JSON.stringify(manifest, null, 2));
+  // logStep(`Wrote manifest → ${MANIFEST_PATH}`);
 
-  const frontendDir = path.dirname(FRONTEND_MANIFEST_PATH);
-  mkdirSync(frontendDir, { recursive: true });
-  writeFileSync(FRONTEND_MANIFEST_PATH, JSON.stringify(manifest, null, 2));
-  log(`           → ${FRONTEND_MANIFEST_PATH}`);
+  // const frontendDir = path.dirname(FRONTEND_MANIFEST_PATH);
+  // mkdirSync(frontendDir, { recursive: true });
+  // writeFileSync(FRONTEND_MANIFEST_PATH, JSON.stringify(manifest, null, 2));
+  // log(`           → ${FRONTEND_MANIFEST_PATH}`);
 
   log("\n════════════════════════════════════════════════════════════");
   log("  BOOTSTRAP COMPLETE");

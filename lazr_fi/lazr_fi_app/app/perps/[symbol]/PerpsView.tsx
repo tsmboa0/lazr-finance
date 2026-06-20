@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useState } from "react";
+import { useWallet } from "@solana/wallet-adapter-react";
 import { Loader2 } from "lucide-react";
 import PerpsMarketBar from "../../components/perps/PerpsMarketBar";
 import PerpsPositionsPanel from "../../components/perps/PerpsPositionsPanel";
 import PerpsTradePanel from "../../components/perps/PerpsTradePanel";
 import PerpsSetupBanner from "../../components/perps/PerpsSetupBanner";
+import PerpsMainnetNotice from "../../components/perps/PerpsMainnetNotice";
 import PerpsEnableSheet from "../../components/perps/PerpsEnableSheet";
 import TradingChart from "../../components/TradingChart";
 import MobileTokenHeader from "../../components/mobile/MobileTokenHeader";
@@ -14,6 +16,10 @@ import MobileChartTradeSection from "../../components/mobile/MobileChartTradeSec
 import MobileBottomNav from "../../components/mobile/MobileBottomNav";
 import { useIsDesktop } from "../../hooks/useIsDesktop";
 import { useMarketData } from "../../providers/MarketDataProvider";
+import {
+  PERPS_ENABLE_SHEET_EVENT,
+  type PerpsEnableSheetDetail,
+} from "../../../lib/onboarding/perps-tour-steps";
 
 type MobileTradeView = "chart" | "trade";
 
@@ -30,6 +36,14 @@ export default function PerpsView({
   const [enableOpen, setEnableOpen] = useState(false);
   const isDesktop = useIsDesktop();
 
+  useEffect(() => {
+    window.dispatchEvent(
+      new CustomEvent<PerpsEnableSheetDetail>(PERPS_ENABLE_SHEET_EVENT, {
+        detail: { open: enableOpen },
+      })
+    );
+  }, [enableOpen]);
+
   if (!token) {
     return null;
   }
@@ -45,6 +59,7 @@ export default function PerpsView({
   if (isDesktop) {
     return (
       <>
+        <PerpsMainnetNotice />
         <PerpsSetupBanner onEnable={() => setEnableOpen(true)} />
         <PerpsEnableSheet open={enableOpen} onClose={() => setEnableOpen(false)} />
         <div className="flex flex-1 min-h-0 min-w-0">
@@ -70,6 +85,7 @@ export default function PerpsView({
 
   return (
     <>
+      <PerpsMainnetNotice />
       <PerpsSetupBanner onEnable={() => setEnableOpen(true)} />
       <PerpsEnableSheet open={enableOpen} onClose={() => setEnableOpen(false)} />
       <div className="flex flex-1 min-h-0 min-w-0 flex-col">

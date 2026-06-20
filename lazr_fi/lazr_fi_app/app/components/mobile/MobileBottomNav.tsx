@@ -72,7 +72,14 @@ export default function MobileBottomNav() {
           }
 
           return (
-            <Link key={item.label} href={item.href} className={className}>
+            <Link
+              key={item.label}
+              href={item.href}
+              className={className}
+              {...(item.label === "Perps"
+                ? { "data-tour": "propamm-perps-nav" }
+                : {})}
+            >
               <NavIndicator active={active} />
               <Icon className="w-5 h-5" strokeWidth={1.75} />
               <span className="text-[10px] font-medium truncate max-w-full px-1 leading-none">

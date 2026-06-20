@@ -53,6 +53,7 @@ export default function MobileWalletButton() {
       <div className="relative shrink-0" ref={menuRef}>
         <button
           type="button"
+          data-tour="connect-wallet"
           onClick={() => setMenuOpen((open) => !open)}
           className="text-xs font-semibold text-gold font-mono tabular-nums px-1 hover:text-gold-light transition-colors"
           aria-expanded={menuOpen}
@@ -93,6 +94,7 @@ export default function MobileWalletButton() {
   return (
     <button
       type="button"
+      data-tour="connect-wallet"
       onClick={handleConnect}
       disabled={connecting}
       className="text-xs font-semibold text-gold hover:text-gold-light transition-colors disabled:opacity-60 px-1 shrink-0"

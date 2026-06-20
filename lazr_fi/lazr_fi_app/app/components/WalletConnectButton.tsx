@@ -53,6 +53,7 @@ export default function WalletConnectButton() {
       <div className="relative" ref={menuRef}>
         <button
           type="button"
+          data-tour="connect-wallet"
           onClick={() => setMenuOpen((open) => !open)}
           className="h-10 px-5 rounded-xl border border-gold/60 bg-gold/10 text-gold text-base font-semibold hover:bg-gold/15 transition-colors font-mono"
           aria-expanded={menuOpen}
@@ -93,6 +94,7 @@ export default function WalletConnectButton() {
   return (
     <button
       type="button"
+      data-tour="connect-wallet"
       onClick={handleConnect}
       disabled={connecting}
       className="h-10 px-6 rounded-xl border border-gold/60 text-gold text-base font-semibold hover:bg-gold/10 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"

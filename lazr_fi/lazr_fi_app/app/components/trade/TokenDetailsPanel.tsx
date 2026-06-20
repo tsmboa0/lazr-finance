@@ -92,7 +92,7 @@ export default function TokenDetailsPanel({
           </button>
         </div>
 
-        <div className="mt-3 flex flex-col gap-2">
+        <div className="mt-3 flex flex-col gap-2" data-tour="propamm-er-quote">
           <div className="flex items-baseline gap-2">
             {priceLoading ? (
               <Loader2

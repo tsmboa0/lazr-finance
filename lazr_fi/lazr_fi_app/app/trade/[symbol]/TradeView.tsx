@@ -11,6 +11,7 @@ import MobileBottomNav from "../../components/mobile/MobileBottomNav";
 import { useIsDesktop } from "../../hooks/useIsDesktop";
 import { useMarketData } from "../../providers/MarketDataProvider";
 import { PoolQuoteProvider } from "../../providers/PoolQuoteProvider";
+import { AutopilotEventProvider } from "../../providers/AutopilotEventProvider";
 import { useState } from "react";
 
 type MobileTradeView = "chart" | "trade";
@@ -42,6 +43,7 @@ export default function TradeView({
   if (isDesktop) {
     return (
       <PoolQuoteProvider assetSymbol={token.ticker}>
+        <AutopilotEventProvider assetSymbol={token.ticker}>
         <div className="flex flex-1 min-h-0 min-w-0">
           <TokenDetailsPanel token={token} loading={loading} />
 
@@ -58,12 +60,14 @@ export default function TradeView({
 
           <SwapPanel token={token} />
         </div>
+        </AutopilotEventProvider>
       </PoolQuoteProvider>
     );
   }
 
   return (
     <PoolQuoteProvider assetSymbol={token.ticker}>
+      <AutopilotEventProvider assetSymbol={token.ticker}>
       <div className="flex flex-1 min-h-0 min-w-0 flex-col">
         <MobileTokenHeader token={token} loading={loading} />
 
@@ -80,6 +84,7 @@ export default function TradeView({
 
         <MobileBottomNav />
       </div>
+      </AutopilotEventProvider>
     </PoolQuoteProvider>
   );
 }

@@ -50,4 +50,20 @@ pub enum PropAmmError {
     InvalidMint,
     #[msg("Vault solvency check failed")]
     VaultInsolvency,
+    #[msg("Autopilot is not active")]
+    AutopilotNotActive,
+    #[msg("Autopilot is already active")]
+    AutopilotAlreadyActive,
+    #[msg("Autopilot cooldown has not elapsed")]
+    AutopilotCooldown,
+    #[msg("Autopilot daily trade limit reached")]
+    AutopilotDailyLimit,
+    #[msg("Autopilot paused due to high volatility")]
+    AutopilotVolPaused,
+    #[msg("Autopilot stopped due to drawdown limit")]
+    AutopilotDrawdownStopped,
+    #[msg("Invalid autopilot strategy")]
+    AutopilotInvalidStrategy,
+    #[msg("Autopilot allocated capital exceeds bank balance")]
+    AutopilotInsufficientCapital,
 }

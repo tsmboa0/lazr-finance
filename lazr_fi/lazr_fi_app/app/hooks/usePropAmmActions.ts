@@ -5,6 +5,7 @@ import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { executeDeposit } from "../../lib/prop-amm/deposit";
 import { executeWithdraw } from "../../lib/prop-amm/withdraw";
 import { executeSwap } from "../../lib/prop-amm/swap";
+import { isUserBankNeedsRedelegateError } from "../../lib/prop-amm/errors";
 import { useAnchorWallet } from "./useBankBalances";
 
 function parseError(err: unknown): string {
@@ -41,6 +42,9 @@ export function usePropAmmActions() {
         });
         return result;
       } catch (err) {
+        if (isUserBankNeedsRedelegateError(err)) {
+          throw err;
+        }
         const message = parseError(err);
         setError(message);
         throw new Error(message);
@@ -70,6 +74,9 @@ export function usePropAmmActions() {
         });
         return result;
       } catch (err) {
+        if (isUserBankNeedsRedelegateError(err)) {
+          throw err;
+        }
         const message = parseError(err);
         setError(message);
         throw new Error(message);

@@ -19,6 +19,8 @@ export interface FlashTradeContextValue {
   connected: boolean;
   owner: string | null;
   isPerpsEnabled: boolean;
+  /** Basket exists on-chain but this browser has no valid session key in localStorage. */
+  needsSessionRefresh: boolean;
   ownerLoaded: boolean;
   streamStatus: StreamStatus;
   snapshot: BasketSnapshot | null;

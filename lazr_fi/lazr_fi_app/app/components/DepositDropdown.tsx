@@ -16,10 +16,19 @@ import { getTradeTokens } from "../../lib/devnet-config";
 import { useWalletBalances } from "../hooks/useWalletBalances";
 import { useBankBalances } from "../hooks/useBankBalances";
 import { usePropAmmActions } from "../hooks/usePropAmmActions";
+import { useUserBankDelegation } from "../hooks/useUserBankDelegation";
+import UserBankRedelegateBanner from "./propamm/UserBankRedelegateBanner";
 import { useOptionalFlashTrade } from "../providers/flash-trade-context";
 import { explorerTx } from "../../lib/flash-trade/client";
+import { appendPropAmmTx } from "../../lib/prop-amm/tx-history";
+import { isUserBankNeedsRedelegateError } from "../../lib/prop-amm/errors";
 import { hasInsufficientBalance } from "../../lib/balance-validation";
 import { formatBankBalance } from "../../lib/format-numbers";
+import {
+  HOME_DEPOSIT_COMPLETED_EVENT,
+  HOME_TOUR_OPEN_DEPOSIT_MENU_EVENT,
+  type HomeDepositCompletedDetail,
+} from "../../lib/onboarding/home-tour-events";
 import InsufficientBalanceError from "./InsufficientBalanceError";
 
 const DEPOSIT_TOKENS = getTradeTokens();
@@ -67,7 +76,7 @@ export default function DepositDropdown({
     DEPOSIT_TOKENS.find((t) => t.symbol === selectedSymbol) ??
     DEPOSIT_TOKENS[0] ??
     null;
-  const { connected } = useWallet();
+  const { connected, publicKey } = useWallet();
   const { setVisible } = useWalletModal();
   const { getBalance, refresh: refreshWallet, loading: walletLoading } =
     useWalletBalances();
@@ -75,6 +84,14 @@ export default function DepositDropdown({
     useBankBalances();
   const { deposit, withdraw, loading: txLoading, error, clearError } =
     usePropAmmActions();
+  const {
+    needsRedelegate,
+    redelegateLoading,
+    redelegateError,
+    redelegate,
+    refresh: refreshUserBankDelegation,
+    clearRedelegateError,
+  } = useUserBankDelegation();
   const flash = useOptionalFlashTrade();
   const depositMargin =
     flash?.depositMargin ??
@@ -138,6 +155,32 @@ export default function DepositDropdown({
     return () => document.removeEventListener("mousedown", handleClick);
   }, [menuOpen, modalMode, isBottomNav]);
 
+  useEffect(() => {
+    const handleTourOpenMenu = () => {
+      setMenuOpen(true);
+      setVenue("propamm");
+      setSelectedSymbol("USDC");
+    };
+
+    window.addEventListener(
+      HOME_TOUR_OPEN_DEPOSIT_MENU_EVENT,
+      handleTourOpenMenu
+    );
+    return () =>
+      window.removeEventListener(
+        HOME_TOUR_OPEN_DEPOSIT_MENU_EVENT,
+        handleTourOpenMenu
+      );
+  }, []);
+
+  const openWalletMenu = () => {
+    if (modalMode) {
+      closeAll();
+      return;
+    }
+    setMenuOpen(true);
+  };
+
   const numericAmount = parseFloat(amount) || 0;
   const walletBalance = activeToken ? getBalance(activeToken.ticker) : null;
   const bankBalance = activeToken
@@ -171,6 +214,7 @@ export default function DepositDropdown({
     activeToken !== null &&
     !insufficientBalance &&
     !actionLoading &&
+    !( !isPerpsVenue && needsRedelegate) &&
     (!isPerpsVenue || (perpsReady && (isPerpsEnabled || !isDeposit)));
 
   const resetStatus = () => {
@@ -233,15 +277,44 @@ export default function DepositDropdown({
       const action = isDeposit ? deposit : withdraw;
       const result = await action(activeToken.symbol, numericAmount);
       setTxSignature(result.signature);
+      if (publicKey) {
+        appendPropAmmTx(publicKey.toBase58(), {
+          kind: isDeposit ? "deposit" : "withdraw",
+          signature: result.signature,
+          pair: activeToken.ticker,
+          direction: isDeposit ? "deposit" : "withdraw",
+          amountLabel: `${formatNumber(numericAmount)} ${activeToken.ticker}`,
+        });
+      }
       setSuccessMessage(
         isDeposit
           ? `Deposited ${formatNumber(numericAmount)} ${activeToken.ticker} to your bank.`
           : `Withdrew ${formatNumber(numericAmount)} ${activeToken.ticker} to your wallet.`
       );
+      if (isDeposit && !isPerpsVenue && activeToken.symbol === "USDC") {
+        window.dispatchEvent(
+          new CustomEvent<HomeDepositCompletedDetail>(
+            HOME_DEPOSIT_COMPLETED_EVENT,
+            {
+              detail: {
+                symbol: "USDC",
+                kind: "deposit",
+                venue: "propamm",
+              },
+            }
+          )
+        );
+      }
       setAmount("");
       await Promise.all([refreshWallet(), refreshBank()]);
-    } catch {
-      // error surfaced via hook
+    } catch (err) {
+      if (isUserBankNeedsRedelegateError(err)) {
+        clearError();
+      }
+    } finally {
+      if (!isPerpsVenue) {
+        await refreshUserBankDelegation();
+      }
     }
   };
 
@@ -263,6 +336,30 @@ export default function DepositDropdown({
               : "Bank → Wallet"}
         </span>
       </div>
+
+      {!isPerpsVenue && (
+        <UserBankRedelegateBanner
+          variant="funds"
+          needsRedelegate={needsRedelegate}
+          loading={redelegateLoading}
+          error={redelegateError}
+          onRedelegate={async () => {
+            clearRedelegateError();
+            clearError();
+            setSuccessMessage("");
+            setTxSignature("");
+            try {
+              const { signature } = await redelegate();
+              setSuccessMessage(
+                "Your bank was re-delegated to the rollup. Swaps are enabled again."
+              );
+              setTxSignature(signature);
+            } catch {
+              // surfaced via redelegateError
+            }
+          }}
+        />
+      )}
 
       <div className="flex items-center gap-1 p-0.5 rounded-lg bg-elevated/60 border border-border">
         {(["propamm", "perps"] as const).map((v) => (
@@ -463,6 +560,8 @@ export default function DepositDropdown({
             ? isDeposit
               ? "Depositing…"
               : "Withdrawing…"
+            : !isPerpsVenue && needsRedelegate
+              ? "Re-delegate your bank first"
             : numericAmount <= 0
               ? "Enter an amount"
               : insufficientBalance
@@ -496,21 +595,12 @@ export default function DepositDropdown({
             ? "relative flex flex-1 min-w-0 h-full self-stretch"
             : "relative"
         }
-        onMouseEnter={() =>
-          !isBottomNav && !modalMode && setMenuOpen(true)
-        }
-        onMouseLeave={() => !isBottomNav && setMenuOpen(false)}
       >
         {isBottomNav ? (
           <button
             type="button"
-            onClick={() => {
-              if (modalMode) {
-                closeAll();
-              } else {
-                setMenuOpen((prev) => !prev);
-              }
-            }}
+            data-tour="deposit"
+            onClick={openWalletMenu}
             className={`flex flex-col items-center justify-center gap-0.5 w-full h-full min-w-0 transition-colors ${
               portfolioActive
                 ? "text-foreground"
@@ -529,13 +619,8 @@ export default function DepositDropdown({
         ) : (
           <button
             type="button"
-            onClick={() => {
-              if (modalMode) {
-                closeAll();
-              } else {
-                setMenuOpen((prev) => !prev);
-              }
-            }}
+            data-tour="deposit"
+            onClick={openWalletMenu}
             className={`p-2.5 rounded-lg transition-colors text-gold ${
               portfolioActive ? "bg-elevated" : "hover:bg-elevated/50"
             }`}
@@ -548,7 +633,7 @@ export default function DepositDropdown({
         )}
 
         {!isBottomNav && menuOpen && !modalMode && (
-          <div className="absolute right-0 top-full z-50 pt-1.5">
+          <div className="absolute right-0 top-full z-[100] pt-1.5">
             <div
               className="min-w-[148px] rounded-xl border border-border bg-elevated py-1 shadow-[0_12px_32px_rgba(0,0,0,0.4)]"
               role="menu"
@@ -576,7 +661,7 @@ export default function DepositDropdown({
         )}
 
         {!isBottomNav && modalMode && (
-          <div className="absolute right-0 top-full z-50 pt-2">
+          <div className="absolute right-0 top-full z-[100] pt-2">
             <div
               className="w-[320px] rounded-2xl border border-border bg-background shadow-[0_16px_48px_rgba(0,0,0,0.45)]"
               role="dialog"
@@ -589,7 +674,7 @@ export default function DepositDropdown({
       </div>
 
       {isBottomNav && menuOpen && !modalMode && (
-        <div className="fixed inset-0 z-50 lg:hidden">
+        <div className="fixed inset-0 z-[100] lg:hidden">
           <button
             type="button"
             className="absolute inset-0 bg-black/55"
@@ -623,7 +708,7 @@ export default function DepositDropdown({
       )}
 
       {isBottomNav && modalMode && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center lg:hidden">
+        <div className="fixed inset-0 z-[100] flex items-end justify-center lg:hidden">
           <button
             type="button"
             className="absolute inset-0 bg-black/60"

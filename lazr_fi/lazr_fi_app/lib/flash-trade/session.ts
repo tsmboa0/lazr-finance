@@ -21,9 +21,9 @@ export interface SessionWallet {
   signTransaction<T extends Transaction | VersionedTransaction>(
     tx: T
   ): Promise<T>;
-  signAllTransactions<T extends Transaction | VersionedTransaction>(
+  signAllTransactions?: <T extends Transaction | VersionedTransaction>(
     txs: T[]
-  ): Promise<T[]>;
+  ) => Promise<T[]>;
 }
 
 export {
@@ -71,7 +71,18 @@ export async function buildSessionTransaction(
     sessionSigner.publicKey
   );
 
-  const manager = new SessionTokenManager(wallet, connection);
+  const walletForManager = {
+    ...wallet,
+    signAllTransactions:
+      wallet.signAllTransactions ??
+      (async <T extends Transaction | VersionedTransaction>(txs: T[]) => {
+        const out: T[] = [];
+        for (const tx of txs) out.push(await wallet.signTransaction(tx));
+        return out;
+      }),
+  };
+
+  const manager = new SessionTokenManager(walletForManager, connection);
   const tx: Transaction = await manager.program.methods
     .createSessionV2(true, new BN(validUntil), new BN(Math.round(topUpSol * 1e9)))
     .accountsPartial({

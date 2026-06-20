@@ -8,10 +8,10 @@ import {
   ChevronDown,
   Star,
   ArrowLeftRight,
-  Droplets,
 } from "lucide-react";
 import WalletConnectButton from "./WalletConnectButton";
 import DepositDropdown from "./DepositDropdown";
+import FaucetModal from "./faucet/FaucetModal";
 import MobileAppBar from "./mobile/MobileAppBar";
 import { useMarketData } from "../providers/MarketDataProvider";
 
@@ -65,7 +65,14 @@ export default function Header() {
 
               if (item.href === "#") {
                 return (
-                  <button key={item.label} type="button" className={className}>
+                  <button
+                    key={item.label}
+                    type="button"
+                    className={className}
+                    {...(["Predict", "Lend", "Portfolio"].includes(item.label)
+                      ? { "data-tour": "perps-coming-soon" }
+                      : {})}
+                  >
                     {item.label}
                     {item.hasDropdown && <ChevronDown className="w-4 h-4" />}
                   </button>
@@ -73,7 +80,14 @@ export default function Header() {
               }
 
               return (
-                <Link key={item.label} href={item.href} className={className}>
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className={className}
+                  {...(item.label === "Perps"
+                    ? { "data-tour": "propamm-perps-nav" }
+                    : {})}
+                >
                   {item.label}
                   {item.hasDropdown && <ChevronDown className="w-4 h-4" />}
                 </Link>
@@ -94,17 +108,7 @@ export default function Header() {
               /
             </kbd>
           </div>
-          <Link
-            href="/faucet"
-            className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-md font-medium transition-colors whitespace-nowrap ${
-              pathname === "/faucet"
-                ? "text-foreground bg-elevated/70"
-                : "text-secondary hover:text-foreground hover:bg-elevated/40"
-            }`}
-          >
-            <Droplets className="w-3.6 h-3.6 text-gold flex-shrink-0" />
-            Faucet
-          </Link>
+          <FaucetModal />
         </div>
 
         <div className="flex items-center gap-3 flex-shrink-0">

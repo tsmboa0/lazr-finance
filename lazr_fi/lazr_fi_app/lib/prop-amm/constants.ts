@@ -13,6 +13,7 @@ export const ER_WS_ENDPOINT = "wss://devnet-eu.magicblock.app/";
 export const ER_VALIDATOR = new PublicKey(manifest.erValidator);
 
 export const USER_BANK_SEED = "user_bank";
+export const AUTOPILOT_SEED = "autopilot";
 export const SESSION_TOKEN_SEED = "session_token_v2";
 export const SESSION_VALIDITY_SEC = 60 * 60 * 24;
 /** L1 transfer to session signer on first createSession (MagicBlock requirement). */

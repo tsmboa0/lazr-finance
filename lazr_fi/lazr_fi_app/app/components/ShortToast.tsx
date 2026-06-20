@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Check } from "lucide-react";
 
 export default function ShortToast({
@@ -12,10 +12,13 @@ export default function ShortToast({
   onDismiss: () => void;
   durationMs?: number;
 }) {
+  const onDismissRef = useRef(onDismiss);
+  onDismissRef.current = onDismiss;
+
   useEffect(() => {
-    const timer = window.setTimeout(onDismiss, durationMs);
+    const timer = window.setTimeout(() => onDismissRef.current(), durationMs);
     return () => window.clearTimeout(timer);
-  }, [onDismiss, durationMs]);
+  }, [message, durationMs]);
 
   return (
     <div

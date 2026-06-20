@@ -6,10 +6,12 @@ export default function AutopilotTabButton({
   active,
   onClick,
   size = "sm",
+  tourId,
 }: {
   active: boolean;
   onClick: () => void;
   size?: "sm" | "md";
+  tourId?: string;
 }) {
   const sizeClasses =
     size === "md"
@@ -20,6 +22,7 @@ export default function AutopilotTabButton({
     <button
       type="button"
       onClick={onClick}
+      {...(tourId ? { "data-tour": tourId } : {})}
       className={`flex items-center gap-1.5 transition-colors text-gold ${sizeClasses} ${
         active
           ? size === "md"

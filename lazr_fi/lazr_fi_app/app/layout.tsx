@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import SolanaWalletProvider from "./providers/SolanaWalletProvider";
+import UserBankDelegationProvider from "./providers/UserBankDelegationProvider";
 import { MarketDataProvider } from "./providers/MarketDataProvider";
 import "./globals.css";
 
@@ -31,7 +32,9 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <SolanaWalletProvider>
-          <MarketDataProvider>{children}</MarketDataProvider>
+          <UserBankDelegationProvider>
+            <MarketDataProvider>{children}</MarketDataProvider>
+          </UserBankDelegationProvider>
         </SolanaWalletProvider>
       </body>
     </html>

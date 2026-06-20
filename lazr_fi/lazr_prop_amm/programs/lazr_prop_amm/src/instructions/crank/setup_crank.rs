@@ -64,7 +64,7 @@ pub fn handler(ctx: Context<SetupCrank>, args: SetupCrankArgs) -> Result<()> {
     let pool = &ctx.accounts.pool;
     let config = &ctx.accounts.config;
     let iterations = if args.iterations <= 0 {
-        CRANK_INFINITE_ITERATIONS
+        crate::constants::CRANK_DEFAULT_ITERATIONS
     } else {
         args.iterations
     };

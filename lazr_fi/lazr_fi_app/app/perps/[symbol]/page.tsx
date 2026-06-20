@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Header from "../../components/Header";
+import PerpsOnboarding from "../../components/onboarding/PerpsOnboarding";
 import PerpsView from "./PerpsView";
 import {
   PERPS_SYMBOLS,
@@ -27,6 +28,7 @@ export default async function PerpsPage({
 
   return (
     <div className="flex flex-col h-screen min-h-0 bg-background">
+      <PerpsOnboarding />
       <Header />
       <div className="flex-1 min-h-0 flex flex-col">
         <PerpsView symbol={meta.symbol} tvSymbol={meta.tvSymbol} />

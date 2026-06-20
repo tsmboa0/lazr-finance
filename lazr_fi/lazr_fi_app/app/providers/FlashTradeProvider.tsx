@@ -22,8 +22,12 @@ import {
 import { allPositions } from "../../lib/flash-trade/hooks";
 import { flash } from "../../lib/flash-trade/client";
 import { fetchBasketBalance } from "../../lib/flash-trade/basket-balance";
-import type { EnableState, EnableWalletCtx } from "../../lib/flash-trade/enable";
+import type { EnableState, EnableWalletCtx, LatencyEntry } from "../../lib/flash-trade/enable";
 import type { FundsStep } from "../../lib/flash-trade/funds";
+import {
+  appendPerpsTx,
+  appendPerpsTxFromLog,
+} from "../../lib/flash-trade/tx-history";
 import {
   loadSession,
   type LoadedSession,
@@ -32,8 +36,6 @@ import type { SessionWallet } from "../../lib/flash-trade/session";
 import type { ActiveSigner } from "../../lib/flash-trade/signer";
 import { baseConnection } from "../../lib/flash-trade/client";
 import { FlashTradeContext } from "./flash-trade-context";
-
-function noopLog() {}
 
 export function FlashTradeProvider({ children }: { children: ReactNode }) {
   const { connected, publicKey, signTransaction, signAllTransactions } =
@@ -60,6 +62,9 @@ export function FlashTradeProvider({ children }: { children: ReactNode }) {
   const [tradeError, setTradeError] = useState<string | null>(null);
 
   const isPerpsEnabled = Boolean(snapshot?.basketPubkey);
+  const needsSessionRefresh = Boolean(
+    owner && ownerLoaded && isPerpsEnabled && !session
+  );
 
   useEffect(() => {
     if (!owner) {
@@ -172,11 +177,11 @@ export function FlashTradeProvider({ children }: { children: ReactNode }) {
   }, [publicKey, signTransaction, signAllTransactions]);
 
   const anchorWallet = useMemo((): SessionWallet | null => {
-    if (!publicKey || !signTransaction || !signAllTransactions) return null;
+    if (!publicKey || !signTransaction) return null;
     return {
       publicKey,
       signTransaction,
-      signAllTransactions,
+      ...(signAllTransactions ? { signAllTransactions } : {}),
     };
   }, [publicKey, signTransaction, signAllTransactions]);
 
@@ -234,8 +239,18 @@ export function FlashTradeProvider({ children }: { children: ReactNode }) {
     void refreshWalletBalances();
   }, [owner, refreshWalletBalances]);
 
+  const logPerpsTx = useCallback(
+    (entry: Omit<LatencyEntry, "id" | "at">) => {
+      if (!owner) return;
+      appendPerpsTxFromLog(owner, entry);
+    },
+    [owner]
+  );
+
   const runEnable = useCallback(async (): Promise<boolean> => {
-    if (!walletCtx || !anchorWallet || !owner) return false;
+    if (!walletCtx || !anchorWallet || !owner) {
+      return false;
+    }
     setEnabling(true);
     setEnableState(null);
     await refreshWalletBalances();
@@ -250,7 +265,7 @@ export function FlashTradeProvider({ children }: { children: ReactNode }) {
         usdcMint,
         balances: { sol: walletSol, usdc: walletUsdc },
         onStep: setEnableState,
-        onLog: noopLog,
+        onLog: logPerpsTx,
       });
       if (result.session) setSession(result.session);
       await refreshOwner();
@@ -268,6 +283,7 @@ export function FlashTradeProvider({ children }: { children: ReactNode }) {
     walletUsdc,
     refreshOwner,
     refreshWalletBalances,
+    logPerpsTx,
   ]);
 
   const depositMargin = useCallback(
@@ -284,7 +300,7 @@ export function FlashTradeProvider({ children }: { children: ReactNode }) {
           usdcMint,
           amount,
           onStep: setFundsStep,
-          onLog: noopLog,
+          onLog: logPerpsTx,
         });
         if (result.ok) await refreshOwner();
         return result;
@@ -292,7 +308,7 @@ export function FlashTradeProvider({ children }: { children: ReactNode }) {
         setFundsLoading(false);
       }
     },
-    [walletCtx, usdcMint, refreshOwner]
+    [walletCtx, usdcMint, refreshOwner, logPerpsTx]
   );
 
   const withdrawMargin = useCallback(
@@ -309,7 +325,7 @@ export function FlashTradeProvider({ children }: { children: ReactNode }) {
           usdcMint,
           amount,
           onStep: setFundsStep,
-          onLog: noopLog,
+          onLog: logPerpsTx,
         });
         if (result.ok) await refreshOwner();
         return result;
@@ -317,19 +333,36 @@ export function FlashTradeProvider({ children }: { children: ReactNode }) {
         setFundsLoading(false);
       }
     },
-    [walletCtx, usdcMint, refreshOwner]
+    [walletCtx, usdcMint, refreshOwner, logPerpsTx]
   );
 
   const openPosition = useCallback(
     async (params: OpenTradeParams) => {
       if (!activeSigner) {
-        return { ok: false, error: "Perps not ready — enable and connect wallet." };
+        return {
+          ok: false,
+          error: needsSessionRefresh
+            ? "Refresh your session key to trade — tap the banner above."
+            : "Perps not ready — enable and connect wallet.",
+        };
       }
       setTradeBusy(true);
       setTradeError(null);
       try {
         const result = await executeOpenPosition(activeSigner, params);
-        if (result.ok) {
+        if (result.ok && result.signature && owner) {
+          appendPerpsTx(owner, {
+            kind: "open",
+            chain: "er",
+            signature: result.signature,
+            market: params.marketSymbol,
+            direction: params.side === "LONG" ? "long" : "short",
+            amountLabel: `$${params.collateralUsd} @ ${params.leverage.toFixed(1)}×`,
+            action:
+              params.orderType === "LIMIT"
+                ? `limit ${params.side.toLowerCase()}`
+                : `market ${params.side.toLowerCase()}`,
+          });
           await refreshOwner();
         } else if (result.error) {
           setTradeError(result.error);
@@ -339,7 +372,7 @@ export function FlashTradeProvider({ children }: { children: ReactNode }) {
         setTradeBusy(false);
       }
     },
-    [activeSigner, refreshOwner]
+    [activeSigner, needsSessionRefresh, owner, refreshOwner]
   );
 
   const closePosition = useCallback(
@@ -349,13 +382,29 @@ export function FlashTradeProvider({ children }: { children: ReactNode }) {
       inputUsdUi?: string;
     }) => {
       if (!activeSigner) {
-        return { ok: false, error: "Perps not ready — enable and connect wallet." };
+        return {
+          ok: false,
+          error: needsSessionRefresh
+            ? "Refresh your session key to close positions — tap the banner above."
+            : "Perps not ready — enable and connect wallet.",
+        };
       }
       setTradeBusy(true);
       setTradeError(null);
       try {
         const result = await executeClosePosition(activeSigner, params);
-        if (result.ok) {
+        if (result.ok && result.signature && owner) {
+          appendPerpsTx(owner, {
+            kind: "close",
+            chain: "er",
+            signature: result.signature,
+            market: params.marketSymbol,
+            direction: params.side === "LONG" ? "long" : "short",
+            amountLabel: params.inputUsdUi && params.inputUsdUi !== "0"
+              ? `$${params.inputUsdUi}`
+              : "Full close",
+            action: `close ${params.side.toLowerCase()}`,
+          });
           await refreshOwner();
         } else if (result.error) {
           setTradeError(result.error);
@@ -365,14 +414,19 @@ export function FlashTradeProvider({ children }: { children: ReactNode }) {
         setTradeBusy(false);
       }
     },
-    [activeSigner, refreshOwner]
+    [activeSigner, needsSessionRefresh, owner, refreshOwner]
   );
 
   const closeAllPositions = useCallback(async () => {
     const positions = allPositions(snapshot);
     if (positions.length === 0) return { ok: true };
     if (!activeSigner) {
-      return { ok: false, error: "Perps not ready." };
+      return {
+        ok: false,
+        error: needsSessionRefresh
+          ? "Refresh your session key to close positions."
+          : "Perps not ready.",
+      };
     }
     setTradeBusy(true);
     setTradeError(null);
@@ -387,19 +441,31 @@ export function FlashTradeProvider({ children }: { children: ReactNode }) {
           setTradeError(result.error ?? "Close failed");
           return result;
         }
+        if (result.signature && owner) {
+          appendPerpsTx(owner, {
+            kind: "close",
+            chain: "er",
+            signature: result.signature,
+            market: p.marketSymbol,
+            direction: side === "LONG" ? "long" : "short",
+            amountLabel: "Full close",
+            action: `close ${side.toLowerCase()}`,
+          });
+        }
       }
       await refreshOwner();
       return { ok: true };
     } finally {
       setTradeBusy(false);
     }
-  }, [snapshot, activeSigner, refreshOwner]);
+  }, [snapshot, activeSigner, needsSessionRefresh, owner, refreshOwner]);
 
   const value = useMemo(
     (): import("./flash-trade-context").FlashTradeContextValue => ({
       connected,
       owner,
       isPerpsEnabled,
+      needsSessionRefresh,
       ownerLoaded,
       streamStatus,
       snapshot,
@@ -433,6 +499,7 @@ export function FlashTradeProvider({ children }: { children: ReactNode }) {
       connected,
       owner,
       isPerpsEnabled,
+      needsSessionRefresh,
       ownerLoaded,
       streamStatus,
       snapshot,

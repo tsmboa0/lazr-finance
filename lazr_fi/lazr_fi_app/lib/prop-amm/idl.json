@@ -101,6 +101,204 @@
       ]
     },
     {
+      "name": "delegate_autopilot",
+      "discriminator": [
+        157,
+        240,
+        43,
+        211,
+        96,
+        254,
+        38,
+        100
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "asset_mint"
+        },
+        {
+          "name": "usdc_mint"
+        },
+        {
+          "name": "pool",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "asset_mint"
+              },
+              {
+                "kind": "account",
+                "path": "usdc_mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "buffer_autopilot",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  117,
+                  102,
+                  102,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "autopilot"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                169,
+                107,
+                214,
+                113,
+                70,
+                58,
+                89,
+                124,
+                192,
+                86,
+                88,
+                76,
+                98,
+                203,
+                91,
+                66,
+                214,
+                211,
+                209,
+                171,
+                24,
+                185,
+                13,
+                6,
+                148,
+                209,
+                248,
+                39,
+                253,
+                75,
+                128,
+                142
+              ]
+            }
+          }
+        },
+        {
+          "name": "delegation_record_autopilot",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "autopilot"
+              }
+            ],
+            "program": {
+              "kind": "account",
+              "path": "delegation_program"
+            }
+          }
+        },
+        {
+          "name": "delegation_metadata_autopilot",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110,
+                  45,
+                  109,
+                  101,
+                  116,
+                  97,
+                  100,
+                  97,
+                  116,
+                  97
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "autopilot"
+              }
+            ],
+            "program": {
+              "kind": "account",
+              "path": "delegation_program"
+            }
+          }
+        },
+        {
+          "name": "autopilot",
+          "writable": true
+        },
+        {
+          "name": "owner_program",
+          "address": "CQMGqi6qSoJPCQzVMPi4Xdob9W4SS267JbSaK5yd3rTw"
+        },
+        {
+          "name": "delegation_program",
+          "address": "DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "delegate_pool",
       "discriminator": [
         209,
@@ -1365,6 +1563,100 @@
       ]
     },
     {
+      "name": "init_autopilot",
+      "discriminator": [
+        120,
+        236,
+        35,
+        34,
+        115,
+        30,
+        166,
+        245
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "asset_mint"
+        },
+        {
+          "name": "usdc_mint"
+        },
+        {
+          "name": "pool",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "asset_mint"
+              },
+              {
+                "kind": "account",
+                "path": "usdc_mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "autopilot",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  117,
+                  116,
+                  111,
+                  112,
+                  105,
+                  108,
+                  111,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "args",
+          "type": {
+            "defined": {
+              "name": "InitAutopilotArgs"
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "init_user_bank",
       "discriminator": [
         88,
@@ -1808,6 +2100,187 @@
       "args": []
     },
     {
+      "name": "process_autopilot_tick",
+      "discriminator": [
+        209,
+        254,
+        162,
+        168,
+        34,
+        172,
+        208,
+        234
+      ],
+      "accounts": [
+        {
+          "name": "autopilot",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  117,
+                  116,
+                  111,
+                  112,
+                  105,
+                  108,
+                  111,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              },
+              {
+                "kind": "account",
+                "path": "autopilot.authority",
+                "account": "AutopilotState"
+              }
+            ]
+          }
+        },
+        {
+          "name": "pool",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool.asset_mint",
+                "account": "Pool"
+              },
+              {
+                "kind": "account",
+                "path": "pool.usdc_mint",
+                "account": "Pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "quote_state",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  113,
+                  117,
+                  111,
+                  116,
+                  101,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "risk_state",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  105,
+                  115,
+                  107,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "user_bank",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  101,
+                  114,
+                  95,
+                  98,
+                  97,
+                  110,
+                  107
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "autopilot.authority",
+                "account": "AutopilotState"
+              }
+            ]
+          }
+        },
+        {
+          "name": "asset_mint"
+        },
+        {
+          "name": "usdc_mint"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "process_crank_tick",
       "discriminator": [
         227,
@@ -2193,6 +2666,213 @@
       "args": []
     },
     {
+      "name": "setup_autopilot_crank",
+      "discriminator": [
+        224,
+        150,
+        134,
+        234,
+        221,
+        252,
+        21,
+        197
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "magic_program"
+        },
+        {
+          "name": "pool",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool.asset_mint",
+                "account": "Pool"
+              },
+              {
+                "kind": "account",
+                "path": "pool.usdc_mint",
+                "account": "Pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "autopilot",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  117,
+                  116,
+                  111,
+                  112,
+                  105,
+                  108,
+                  111,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              },
+              {
+                "kind": "account",
+                "path": "autopilot.authority",
+                "account": "AutopilotState"
+              }
+            ]
+          }
+        },
+        {
+          "name": "quote_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  113,
+                  117,
+                  111,
+                  116,
+                  101,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "risk_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  105,
+                  115,
+                  107,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "user_bank",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  101,
+                  114,
+                  95,
+                  98,
+                  97,
+                  110,
+                  107
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "autopilot.authority",
+                "account": "AutopilotState"
+              }
+            ]
+          }
+        },
+        {
+          "name": "asset_mint"
+        },
+        {
+          "name": "usdc_mint"
+        },
+        {
+          "name": "program"
+        },
+        {
+          "name": "session_token",
+          "optional": true
+        }
+      ],
+      "args": [
+        {
+          "name": "args",
+          "type": {
+            "defined": {
+              "name": "SetupAutopilotCrankArgs"
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "setup_crank",
       "discriminator": [
         100,
@@ -2395,6 +3075,236 @@
           }
         }
       ]
+    },
+    {
+      "name": "start_autopilot",
+      "discriminator": [
+        189,
+        171,
+        6,
+        248,
+        70,
+        108,
+        32,
+        179
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "pool",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool.asset_mint",
+                "account": "Pool"
+              },
+              {
+                "kind": "account",
+                "path": "pool.usdc_mint",
+                "account": "Pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "quote_state",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  113,
+                  117,
+                  111,
+                  116,
+                  101,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "autopilot",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  117,
+                  116,
+                  111,
+                  112,
+                  105,
+                  108,
+                  111,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              },
+              {
+                "kind": "account",
+                "path": "autopilot.authority",
+                "account": "AutopilotState"
+              }
+            ]
+          }
+        },
+        {
+          "name": "user_bank",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  101,
+                  114,
+                  95,
+                  98,
+                  97,
+                  110,
+                  107
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "autopilot.authority",
+                "account": "AutopilotState"
+              }
+            ]
+          }
+        },
+        {
+          "name": "session_token",
+          "optional": true
+        }
+      ],
+      "args": [
+        {
+          "name": "args",
+          "type": {
+            "defined": {
+              "name": "StartAutopilotArgs"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "stop_autopilot",
+      "discriminator": [
+        146,
+        1,
+        161,
+        231,
+        145,
+        171,
+        233,
+        15
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "asset_mint"
+        },
+        {
+          "name": "usdc_mint"
+        },
+        {
+          "name": "pool",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "asset_mint"
+              },
+              {
+                "kind": "account",
+                "path": "usdc_mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "autopilot",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  117,
+                  116,
+                  111,
+                  112,
+                  105,
+                  108,
+                  111,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              },
+              {
+                "kind": "account",
+                "path": "autopilot.authority",
+                "account": "AutopilotState"
+              }
+            ]
+          }
+        },
+        {
+          "name": "session_token",
+          "optional": true
+        }
+      ],
+      "args": []
     },
     {
       "name": "swap_asset_for_usdc",
@@ -2681,6 +3591,72 @@
       ]
     },
     {
+      "name": "undelegate_autopilot",
+      "discriminator": [
+        214,
+        125,
+        114,
+        229,
+        63,
+        128,
+        1,
+        164
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "autopilot",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  117,
+                  116,
+                  111,
+                  112,
+                  105,
+                  108,
+                  111,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "autopilot.pool",
+                "account": "AutopilotState"
+              },
+              {
+                "kind": "account",
+                "path": "autopilot.authority",
+                "account": "AutopilotState"
+              }
+            ]
+          }
+        },
+        {
+          "name": "session_token",
+          "optional": true
+        },
+        {
+          "name": "magic_program",
+          "address": "Magic11111111111111111111111111111111111111"
+        },
+        {
+          "name": "magic_context",
+          "writable": true,
+          "address": "MagicContext1111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "undelegate_user_bank",
       "discriminator": [
         68,
@@ -2740,6 +3716,101 @@
         }
       ],
       "args": []
+    },
+    {
+      "name": "update_autopilot",
+      "discriminator": [
+        224,
+        45,
+        182,
+        168,
+        221,
+        240,
+        187,
+        223
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "asset_mint"
+        },
+        {
+          "name": "usdc_mint"
+        },
+        {
+          "name": "pool",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "asset_mint"
+              },
+              {
+                "kind": "account",
+                "path": "usdc_mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "autopilot",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  117,
+                  116,
+                  111,
+                  112,
+                  105,
+                  108,
+                  111,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              },
+              {
+                "kind": "account",
+                "path": "autopilot.authority",
+                "account": "AutopilotState"
+              }
+            ]
+          }
+        },
+        {
+          "name": "session_token",
+          "optional": true
+        }
+      ],
+      "args": [
+        {
+          "name": "args",
+          "type": {
+            "defined": {
+              "name": "UpdateAutopilotArgs"
+            }
+          }
+        }
+      ]
     },
     {
       "name": "update_config",
@@ -3193,6 +4264,19 @@
       ]
     },
     {
+      "name": "AutopilotState",
+      "discriminator": [
+        254,
+        69,
+        40,
+        109,
+        5,
+        158,
+        43,
+        7
+      ]
+    },
+    {
       "name": "Config",
       "discriminator": [
         155,
@@ -3281,6 +4365,21 @@
         41,
         178,
         59
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "AutopilotTick",
+      "discriminator": [
+        53,
+        174,
+        33,
+        174,
+        158,
+        18,
+        172,
+        55
       ]
     }
   ],
@@ -3404,6 +4503,46 @@
       "code": 6023,
       "name": "VaultInsolvency",
       "msg": "Vault solvency check failed"
+    },
+    {
+      "code": 6024,
+      "name": "AutopilotNotActive",
+      "msg": "Autopilot is not active"
+    },
+    {
+      "code": 6025,
+      "name": "AutopilotAlreadyActive",
+      "msg": "Autopilot is already active"
+    },
+    {
+      "code": 6026,
+      "name": "AutopilotCooldown",
+      "msg": "Autopilot cooldown has not elapsed"
+    },
+    {
+      "code": 6027,
+      "name": "AutopilotDailyLimit",
+      "msg": "Autopilot daily trade limit reached"
+    },
+    {
+      "code": 6028,
+      "name": "AutopilotVolPaused",
+      "msg": "Autopilot paused due to high volatility"
+    },
+    {
+      "code": 6029,
+      "name": "AutopilotDrawdownStopped",
+      "msg": "Autopilot stopped due to drawdown limit"
+    },
+    {
+      "code": 6030,
+      "name": "AutopilotInvalidStrategy",
+      "msg": "Invalid autopilot strategy"
+    },
+    {
+      "code": 6031,
+      "name": "AutopilotInsufficientCapital",
+      "msg": "Autopilot allocated capital exceeds bank balance"
     }
   ],
   "types": [
@@ -3439,6 +4578,153 @@
           {
             "name": "bump",
             "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "AutopilotState",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "asset_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "usdc_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "status",
+            "type": "u8"
+          },
+          {
+            "name": "strategy",
+            "type": "u8"
+          },
+          {
+            "name": "allocated_usdc",
+            "docs": [
+              "Max USDC budget the bot manages (raw token units)."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "target_asset_bps",
+            "type": "u32"
+          },
+          {
+            "name": "buy_band_bps",
+            "type": "u32"
+          },
+          {
+            "name": "sell_band_bps",
+            "type": "u32"
+          },
+          {
+            "name": "max_trade_bps",
+            "type": "u32"
+          },
+          {
+            "name": "min_edge_bps",
+            "type": "u32"
+          },
+          {
+            "name": "cooldown_sec",
+            "type": "u32"
+          },
+          {
+            "name": "max_trades_per_day",
+            "type": "u16"
+          },
+          {
+            "name": "tick_interval_ms",
+            "type": "u32"
+          },
+          {
+            "name": "pause_vol_bps",
+            "type": "u32"
+          },
+          {
+            "name": "stop_drawdown_bps",
+            "type": "u32"
+          },
+          {
+            "name": "last_fair_price_e8",
+            "type": "i64"
+          },
+          {
+            "name": "last_trade_ts",
+            "type": "i64"
+          },
+          {
+            "name": "trades_today",
+            "type": "u16"
+          },
+          {
+            "name": "trades_day_start_ts",
+            "type": "i64"
+          },
+          {
+            "name": "starting_nav_usdc",
+            "type": "u64"
+          },
+          {
+            "name": "high_water_nav_usdc",
+            "type": "u64"
+          },
+          {
+            "name": "total_trades",
+            "type": "u32"
+          },
+          {
+            "name": "crank_task_id",
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "AutopilotTick",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "outcome",
+            "type": "u8"
+          },
+          {
+            "name": "skip_reason",
+            "type": "u8"
+          },
+          {
+            "name": "amount_in",
+            "type": "u64"
+          },
+          {
+            "name": "amount_out",
+            "type": "u64"
           }
         ]
       }
@@ -3543,6 +4829,22 @@
           {
             "name": "bump",
             "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "InitAutopilotArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "strategy",
+            "type": "u8"
+          },
+          {
+            "name": "crank_task_id",
+            "type": "i64"
           }
         ]
       }
@@ -3818,6 +5120,18 @@
       }
     },
     {
+      "name": "SetupAutopilotCrankArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "iterations",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
       "name": "SetupCrankArgs",
       "type": {
         "kind": "struct",
@@ -3829,6 +5143,18 @@
           {
             "name": "iterations",
             "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "StartAutopilotArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "allocated_usdc",
+            "type": "u64"
           }
         ]
       }
@@ -3861,6 +5187,38 @@
           {
             "name": "min_amount_out",
             "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UpdateAutopilotArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "strategy",
+            "type": {
+              "option": "u8"
+            }
+          },
+          {
+            "name": "allocated_usdc",
+            "type": {
+              "option": "u64"
+            }
+          },
+          {
+            "name": "tick_interval_ms",
+            "type": {
+              "option": "u32"
+            }
+          },
+          {
+            "name": "crank_task_id",
+            "type": {
+              "option": "i64"
+            }
           }
         ]
       }
@@ -4018,6 +5376,11 @@
       "name": "ASSET_VAULT_SEED",
       "type": "bytes",
       "value": "[97, 115, 115, 101, 116, 95, 118, 97, 117, 108, 116]"
+    },
+    {
+      "name": "AUTOPILOT_SEED",
+      "type": "bytes",
+      "value": "[97, 117, 116, 111, 112, 105, 108, 111, 116]"
     },
     {
       "name": "CONFIG_SEED",

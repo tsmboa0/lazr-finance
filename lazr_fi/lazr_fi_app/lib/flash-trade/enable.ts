@@ -172,7 +172,9 @@ export async function enableOneClickTrading(args: {
 
   const state: EnableState = {
     phase: "precheck",
-    headline: "checking wallet…",
+    headline: basketExists && !freshSession
+      ? "checking wallet — basket already on-chain…"
+      : "checking wallet…",
     steps: [],
     fundingHint: null,
     needsUsdc: false,
