@@ -143,11 +143,11 @@ export function subscribeAutopilotTicks(params: {
 
   const subscriptionId = connection.onLogs(
     PROGRAM_ID,
-    (logs) => {
-      const signature = logs.signature;
+    (logsResult, _ctx) => {
+      const signature = logsResult.signature;
       if (!signature || seenSignatures.has(signature)) return;
 
-      for (const event of parser.parseLogs(logs.logs)) {
+      for (const event of parser.parseLogs(logsResult.logs)) {
         if (event.name !== "AutopilotTick") continue;
 
         const tick = readTickEvent(event.data as Record<string, unknown>);

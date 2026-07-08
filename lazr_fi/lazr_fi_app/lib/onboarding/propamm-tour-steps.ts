@@ -12,7 +12,7 @@ export const PROPAMM_TOUR_STEPS: HomeTourStep[] = [
     id: "positions",
     target: "propamm-positions",
     title: "Transaction history",
-    body: "Your swaps, deposits, and withdrawals appear here with links to the Ephemeral Rollup (swaps) or devnet explorer (bank moves).",
+    body: "Your swaps, deposits, withdrawals, Autopilot actions appear here with links to the Ephemeral Rollup (swaps, crank, and bot execution) or devnet explorer (bank moves).",
     placement: "top",
   },
   {

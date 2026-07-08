@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Bot, Copy } from "lucide-react";
+import { Bot, Copy, Loader2, Square } from "lucide-react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { useOptionalCopyTrade } from "../../providers/copy-trade-context";
 import { useOptionalFlashTrade } from "../../providers/flash-trade-context";
 import { useCopyLeaders, useLeaderSnapshot } from "../../../lib/copy-trade/hooks";
 import { DEFAULT_LEADER_SELECTION } from "../../../lib/copy-trade/leaders";
@@ -25,18 +26,19 @@ export default function PerpsAutopilotPanel({
   const { connected, publicKey } = useWallet();
   const { setVisible } = useWalletModal();
   const flash = useOptionalFlashTrade();
+  const copy = useOptionalCopyTrade();
   const followerAddress = publicKey?.toBase58() ?? null;
 
   const { leaders, loading: leadersLoading } = useCopyLeaders();
   const [selection, setSelection] = useState<LeaderSelection | null>(null);
   const [hydrated, setHydrated] = useState(false);
+  const [starting, setStarting] = useState(false);
 
   useEffect(() => {
     setSelection(loadLeaderSelection() ?? DEFAULT_LEADER_SELECTION);
     setHydrated(true);
   }, []);
 
-  // If env adds curated leaders and nothing is saved, prefer the API's first entry.
   useEffect(() => {
     if (!hydrated || leadersLoading || leaders.length === 0) return;
     const saved = loadLeaderSelection();
@@ -65,13 +67,36 @@ export default function PerpsAutopilotPanel({
   const isPerpsEnabled = flash?.isPerpsEnabled ?? false;
   const ownerLoaded = flash?.ownerLoaded ?? false;
   const needsEnable = connected && flash && ownerLoaded && !isPerpsEnabled;
+  const needsSessionRefresh = flash?.needsSessionRefresh ?? false;
+  const marginBalanceUsd = flash?.marginBalanceUsd ?? 0;
 
   const selfCopy =
     followerAddress && leaderAddress && followerAddress === leaderAddress;
 
   const hasValidLeader = Boolean(leaderAddress);
+  const isCopying = copy?.isCopying ?? false;
   const canStartCopying =
-    connected && isPerpsEnabled && hasValidLeader && !selfCopy;
+    connected &&
+    isPerpsEnabled &&
+    hasValidLeader &&
+    !selfCopy &&
+    !needsSessionRefresh &&
+    Boolean(flash?.activeSigner);
+
+  const handleStart = useCallback(async () => {
+    if (!copy || !leaderAddress || !canStartCopying) return;
+    copy.clearMirrorError();
+    setStarting(true);
+    try {
+      await copy.startCopying(leaderAddress);
+    } finally {
+      setStarting(false);
+    }
+  }, [copy, leaderAddress, canStartCopying]);
+
+  const handleStop = useCallback(() => {
+    copy?.stopCopying();
+  }, [copy]);
 
   if (!hydrated) {
     return null;
@@ -87,12 +112,26 @@ export default function PerpsAutopilotPanel({
           <div className="min-w-0">
             <h3 className="text-sm font-semibold text-foreground">Copy Trade</h3>
             <p className="text-xs text-tertiary mt-0.5 leading-relaxed">
-              Browse traders and preview their live Flash perps positions. Enable
-              perps when you&apos;re ready to mirror their moves automatically.
+              Mirror a leader&apos;s Flash perps moves while this tab is open.
+              New positions only — existing leader positions are not copied on
+              start. Sized to your margin with a hard cap per trade.
             </p>
           </div>
         </div>
       </div>
+
+      {isCopying && (
+        <div className="rounded-xl border border-green/30 bg-green/5 px-3 py-2.5 flex items-center gap-2">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-green" />
+          </span>
+          <p className="text-xs text-green font-medium">
+            Copying {truncateAddress(copy?.leaderAddress ?? leaderAddress ?? "")}
+            — keep this tab open
+          </p>
+        </div>
+      )}
 
       <LeaderPicker
         selected={selection}
@@ -100,6 +139,29 @@ export default function PerpsAutopilotPanel({
         followerAddress={followerAddress}
         previewMode
       />
+
+      <div className="rounded-xl border border-border-subtle bg-elevated/20 px-3 py-3 flex flex-col gap-2">
+        <label className="text-xs font-medium text-foreground">
+          Max mirror size (USD notional per trade)
+        </label>
+        <input
+          type="number"
+          min={11}
+          max={10000}
+          step={10}
+          value={copy?.maxFollowUsd ?? 100}
+          disabled={isCopying}
+          onChange={(e) => {
+            const n = Number(e.target.value);
+            if (Number.isFinite(n)) copy?.setMaxFollowUsd(n);
+          }}
+          className="h-10 rounded-xl bg-input border border-border px-3 text-sm font-mono text-foreground disabled:opacity-50"
+        />
+        <p className="text-[11px] text-tertiary">
+          Your free margin: {fmtUsd(marginBalanceUsd)} — mirrors scale
+          proportionally to the leader, capped here.
+        </p>
+      </div>
 
       {hasValidLeader && (
         <div className="rounded-xl border border-border-subtle bg-elevated/20 overflow-hidden">
@@ -144,10 +206,24 @@ export default function PerpsAutopilotPanel({
         </div>
       )}
 
+      {copy?.lastMirror && (
+        <p className="text-xs text-secondary bg-elevated/30 border border-border-subtle rounded-xl px-3 py-2">
+          Last mirror: {copy.lastMirror.kind} {copy.lastMirror.side}{" "}
+          {copy.lastMirror.market} — {copy.lastMirror.detail}
+        </p>
+      )}
+
+      {(copy?.mirrorError || needsSessionRefresh) && (
+        <p className="text-xs text-gold bg-gold/10 border border-gold/20 rounded-xl px-3 py-2">
+          {needsSessionRefresh
+            ? "Refresh your session key before copying."
+            : copy?.mirrorError}
+        </p>
+      )}
+
       {selfCopy && connected && (
         <p className="text-xs text-gold bg-gold/10 border border-gold/20 rounded-xl px-3 py-2">
-          This is your wallet — you can preview it, but you can&apos;t copy
-          yourself. Pick a different trader to start mirroring.
+          This is your wallet — pick a different trader to copy.
         </p>
       )}
 
@@ -169,18 +245,43 @@ export default function PerpsAutopilotPanel({
           <Bot className="w-4 h-4" />
           Enable Perps to start copying
         </button>
+      ) : needsSessionRefresh ? (
+        <button
+          type="button"
+          onClick={onRequestEnable}
+          className="h-12 rounded-2xl bg-gradient-to-r from-gold-dark via-gold to-gold-light text-background text-base font-bold hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+        >
+          <Bot className="w-4 h-4" />
+          Refresh session to copy
+        </button>
+      ) : isCopying ? (
+        <button
+          type="button"
+          onClick={handleStop}
+          className="h-12 rounded-2xl border border-red/40 bg-red/10 text-red text-base font-bold hover:bg-red/15 transition-colors flex items-center justify-center gap-2"
+        >
+          <Square className="w-4 h-4" />
+          Stop copying
+        </button>
       ) : (
         <button
           type="button"
-          disabled={!canStartCopying}
+          onClick={handleStart}
+          disabled={!canStartCopying || starting}
           className="h-12 rounded-2xl bg-gradient-to-r from-gold-dark via-gold to-gold-light text-background text-base font-bold hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
-          <Bot className="w-4 h-4" />
+          {starting ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Bot className="w-4 h-4" />
+          )}
           {selfCopy
             ? "Choose a different trader"
             : !hasValidLeader
               ? "Select a trader"
-              : "Start copying"}
+              : marginBalanceUsd <= 0
+                ? "Deposit margin to copy"
+                : "Start copying"}
         </button>
       )}
     </div>

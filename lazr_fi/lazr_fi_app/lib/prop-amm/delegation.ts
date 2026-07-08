@@ -157,7 +157,7 @@ export function requireErEndpoint(status: DelegationStatus): string {
     throw new Error("Account is not delegated to an Ephemeral Rollup.");
   }
   logStep("delegation", "Using devnet-eu ER endpoint", { endpoint: ER_ENDPOINT });
-  return ER_ENDPOINT;
+  return ER_ENDPOINT; 
 }
 
 export async function waitForUndelegated(

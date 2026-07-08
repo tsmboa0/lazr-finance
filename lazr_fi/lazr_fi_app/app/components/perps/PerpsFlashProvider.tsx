@@ -11,10 +11,22 @@ const FlashTradeProvider = dynamic(
   { ssr: false }
 );
 
+const CopyTradeProvider = dynamic(
+  () =>
+    import("../../providers/CopyTradeProvider").then(
+      (mod) => mod.CopyTradeProvider
+    ),
+  { ssr: false }
+);
+
 export default function PerpsFlashProvider({
   children,
 }: {
   children: ReactNode;
 }) {
-  return <FlashTradeProvider>{children}</FlashTradeProvider>;
+  return (
+    <FlashTradeProvider>
+      <CopyTradeProvider>{children}</CopyTradeProvider>
+    </FlashTradeProvider>
+  );
 }

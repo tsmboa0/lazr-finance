@@ -6,7 +6,7 @@ const manifest = getDevnetManifest();
 export const PROGRAM_ID = new PublicKey(manifest.programId);
 export const USDC_MINT = new PublicKey(manifest.usdcMint);
 /** Delegation status API only — do not send ER transactions here. */
-export const MAGIC_ROUTER_ENDPOINT = "https://devnet-router.magicblock.app";
+export const MAGIC_ROUTER_ENDPOINT = "https://devnet-router.magicblock.app/";
 /** Fast ER RPC for all delegated reads and writes. */
 export const ER_ENDPOINT = "https://devnet-eu.magicblock.app/";
 export const ER_WS_ENDPOINT = "wss://devnet-eu.magicblock.app/";
